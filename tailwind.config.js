@@ -1,0 +1,50 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ['./App.tsx', './src/**/*.{ts,tsx}'],
+  presets: [require('nativewind/preset')],
+  theme: {
+    extend: {
+      colors: {
+        canvas: '#FAFAFA',
+        ink: '#141315',
+        muted: '#88838F',
+        line: '#B5B0BA',
+        primary: '#7C3AED',
+        'primary-soft': '#F1EDFE',
+        danger: '#FF4D55',
+        warning: '#FFB800',
+        mint: '#D0FFEC',
+        'mint-card': '#CBF6E5',
+        blush: '#FFE0E0',
+        rose: '#FFE3F2',
+        cream: '#FFFBEb',
+        sky: '#E3F6FF',
+        aqua: '#CDE8E3',
+        taupe: '#E7DDD8',
+        orange: '#FF9138',
+        disabled: '#ADA9B3',
+        input: '#F5F5F5',
+        'chat-panel': '#F2DAFF',
+        reading: '#795132',
+        lesson: '#66CCFF',
+        'event-border': '#4CDEAA',
+        'question-today': '#F6E3FF',
+      },
+      borderRadius: {
+        card: '12px',
+        button: '18px',
+        nav: '28px',
+      },
+      fontSize: {
+        caption: ['11px', '16px'],
+        body: ['14px', '21px'],
+        title: ['21px', '30px'],
+        hero: ['28px', '42px'],
+      },
+      spacing: {
+        screen: '20px',
+      },
+    },
+  },
+  plugins: [],
+};
