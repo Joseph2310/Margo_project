@@ -1,16 +1,16 @@
 export interface ApiErrorShape {
   message: string;
-  code?: string;
+  code: string;
   fieldErrors?: Record<string, string>;
 }
 
-export interface MutationResult<T> {
-  data: T;
-  message?: string;
+export interface MessageResponse {
+  message: string;
 }
 
-/** Endpoint paths and wire DTOs remain intentionally absent until Swagger is supplied. */
-export interface BackendContractStatus {
-  configured: false;
-  reason: 'swagger-not-supplied';
+export interface SubmissionResult {
+  id: string;
+  pointsAwarded: number;
+  totalPoints: number;
+  message: string;
 }

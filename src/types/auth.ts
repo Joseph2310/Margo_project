@@ -26,7 +26,38 @@ export interface VerificationPayload {
 }
 
 export interface AuthSession {
-  isAuthenticated: boolean;
-  accessToken?: string;
-  beneficiaryId?: string;
+  isAuthenticated: true;
+  accessToken: string;
+  refreshToken: string;
+  tokenType: 'bearer';
+  expiresIn: number;
+  beneficiaryId: string;
+}
+
+export interface VerificationChallenge {
+  email: string;
+  mode: VerificationMode;
+  expiresInSeconds: number;
+  message: string;
+  verificationCode?: string;
+}
+
+export interface VerificationResult {
+  mode: VerificationMode;
+  session?: AuthSession;
+  passwordResetToken?: string;
+  expiresIn?: number;
+}
+
+export interface ResetPasswordPayload {
+  email: string;
+  resetToken: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  password: string;
+  confirmPassword: string;
 }

@@ -5,12 +5,27 @@ import { AppHeader } from '../../components/AppHeader';
 import { AppText } from '../../components/AppText';
 import { Screen } from '../../components/Screen';
 import { QueryState } from '../../components/feedback/QueryState';
-import { useReflectionQuery } from '../../hooks/useDesignContent';
+import {
+  useCompleteReflectionMutation,
+  useReflectionQuery,
+} from '../../providers/RetreatProvider/hooks';
 import { colors } from '../../theme/tokens';
+import { Alert } from 'react-native';
+import { getApiErrorMessage } from '../../api/errors';
 
 export function ReflectionScreen() {
   const reflection = useReflectionQuery();
+  const completeReflection = useCompleteReflectionMutation();
   const [completed, setCompleted] = useState(false);
+  const complete = async () => {
+    if (!reflection.data || reflection.data.completed || completed) return;
+    try {
+      await completeReflection.mutateAsync(reflection.data.id);
+      setCompleted(true);
+    } catch (error) {
+      Alert.alert('تعذر حفظ الإكمال', getApiErrorMessage(error));
+    }
+  };
   return (
     <Screen>
       <AppHeader title="الريفلكشن" />
@@ -42,9 +57,13 @@ export function ReflectionScreen() {
                 </AppText>
               ) : null}
             </View>
-            <Pressable onPress={() => setCompleted(current => !current)}>
+            <Pressable onPress={complete}>
               <Ionicons
-                name={completed ? 'checkbox' : 'square-outline'}
+                name={
+                  completed || reflection.data.completed
+                    ? 'checkbox'
+                    : 'square-outline'
+                }
                 size={27}
                 color={colors.primary}
               />

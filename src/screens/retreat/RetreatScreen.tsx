@@ -6,11 +6,17 @@ import { PrimaryButton } from '../../components/PrimaryButton';
 import { Screen } from '../../components/Screen';
 import { ActivityCard } from '../../components/cards/ActivityCard';
 import { QueryState } from '../../components/feedback/QueryState';
-import { useActivitiesQuery } from '../../hooks/useDesignContent';
+import {
+  useActivitiesQuery,
+  useRetreatSubmissionMutation,
+} from '../../providers/RetreatProvider/hooks';
 import { colors } from '../../theme/tokens';
+import { Alert } from 'react-native';
+import { getApiErrorMessage } from '../../api/errors';
 
 export function RetreatScreen() {
   const activities = useActivitiesQuery();
+  const submitRetreat = useRetreatSubmissionMutation();
   const [checkedIds, setCheckedIds] = useState<string[]>([]);
   const [reflection, setReflection] = useState('');
   const [sent, setSent] = useState(false);
@@ -21,6 +27,20 @@ export function RetreatScreen() {
         ? current.filter(item => item !== id)
         : [...current, id],
     );
+
+  const submit = async () => {
+    try {
+      await submitRetreat.mutateAsync({
+        activityIds: checkedIds,
+        reflection: reflection.trim() || undefined,
+      });
+      setSent(true);
+      setCheckedIds([]);
+      setReflection('');
+    } catch (error) {
+      Alert.alert('تعذر الإرسال', getApiErrorMessage(error));
+    }
+  };
 
   return (
     <Screen bottomInset={false}>
@@ -59,7 +79,8 @@ export function RetreatScreen() {
         className="mt-8"
         label="إرسال"
         disabled={!reflection.trim() && checkedIds.length === 0}
-        onPress={() => setSent(true)}
+        loading={submitRetreat.isPending}
+        onPress={submit}
       />
     </Screen>
   );

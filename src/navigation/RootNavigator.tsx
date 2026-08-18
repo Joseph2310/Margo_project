@@ -20,45 +20,72 @@ import { ReflectionScreen } from '../screens/retreat/ReflectionScreen';
 import { SuggestionsScreen } from '../screens/suggestions/SuggestionsScreen';
 import type { RootStackParamList } from '../types/navigation';
 import { MainTabs } from './MainTabs';
+import { useAppSelector } from '../store/hooks';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
+  const { hasCompletedSplash, isAuthenticated } = useAppSelector(
+    state => state.auth,
+  );
   return (
     <NavigationContainer direction="rtl">
       <Stack.Navigator
         initialRouteName="Splash"
         screenOptions={{ headerShown: false, animation: 'slide_from_left' }}>
-        <Stack.Screen
-          name="Splash"
-          component={SplashScreen}
-          options={{ animation: 'fade' }}
-        />
-        <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="BiometricLogin" component={BiometricLoginScreen} />
-        <Stack.Screen name="Register" component={RegisterScreen} />
-        <Stack.Screen name="Verification" component={VerificationScreen} />
-        <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-        <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
-        <Stack.Screen
-          name="Main"
-          component={MainTabs}
-          options={{ gestureEnabled: false }}
-        />
-        <Stack.Screen name="Events" component={EventsScreen} />
-        <Stack.Screen name="DailyReading" component={DailyReadingScreen} />
-        <Stack.Screen
-          name="QuestionCategories"
-          component={QuestionCategoriesScreen}
-        />
-        <Stack.Screen name="QuestionList" component={QuestionListScreen} />
-        <Stack.Screen name="AddQuestion" component={AddQuestionScreen} />
-        <Stack.Screen name="Reflection" component={ReflectionScreen} />
-        <Stack.Screen name="Suggestions" component={SuggestionsScreen} />
-        <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-        <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
-        <Stack.Screen name="Chat" component={ChatScreen} />
-        <Stack.Screen name="Notifications" component={NotificationsScreen} />
+        {!hasCompletedSplash ? (
+          <Stack.Screen
+            name="Splash"
+            component={SplashScreen}
+            options={{ animation: 'fade' }}
+          />
+        ) : isAuthenticated ? (
+          <>
+            <Stack.Screen
+              name="Main"
+              component={MainTabs}
+              options={{ gestureEnabled: false }}
+            />
+            <Stack.Screen name="Events" component={EventsScreen} />
+            <Stack.Screen name="DailyReading" component={DailyReadingScreen} />
+            <Stack.Screen
+              name="QuestionCategories"
+              component={QuestionCategoriesScreen}
+            />
+            <Stack.Screen name="QuestionList" component={QuestionListScreen} />
+            <Stack.Screen name="AddQuestion" component={AddQuestionScreen} />
+            <Stack.Screen name="Reflection" component={ReflectionScreen} />
+            <Stack.Screen name="Suggestions" component={SuggestionsScreen} />
+            <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+            <Stack.Screen
+              name="ChangePassword"
+              component={ChangePasswordScreen}
+            />
+            <Stack.Screen name="Chat" component={ChatScreen} />
+            <Stack.Screen
+              name="Notifications"
+              component={NotificationsScreen}
+            />
+          </>
+        ) : (
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen
+              name="BiometricLogin"
+              component={BiometricLoginScreen}
+            />
+            <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="Verification" component={VerificationScreen} />
+            <Stack.Screen
+              name="ForgotPassword"
+              component={ForgotPasswordScreen}
+            />
+            <Stack.Screen
+              name="ResetPassword"
+              component={ResetPasswordScreen}
+            />
+          </>
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );

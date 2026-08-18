@@ -1,7 +1,12 @@
 import { View } from 'react-native';
-import { passwordRules } from '../../constants/business';
 import { AppText } from '../AppText';
 import { TickCircleIcon } from '../icons/TickCircleIcon';
+
+const passwordRules = [
+  { key: 'length', label: '8 حروف' },
+  { key: 'number', label: 'رمز' },
+  { key: 'uppercase', label: 'حرف كبير' },
+] as const;
 
 export function PasswordRules({ password }: { password: string }) {
   const states = {

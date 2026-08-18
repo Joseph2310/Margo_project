@@ -12,10 +12,15 @@ import {
   resetPasswordSchema,
   type ResetPasswordForm,
 } from '../../utils/validation';
+import { useResetPasswordMutation } from '../../providers/AuthProvider/hooks';
+import { useState } from 'react';
+import { getApiErrorMessage } from '../../api/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ResetPassword'>;
 
-export function ResetPasswordScreen({ navigation }: Props) {
+export function ResetPasswordScreen({ navigation, route }: Props) {
+  const resetPassword = useResetPasswordMutation();
+  const [serverError, setServerError] = useState<string>();
   const {
     control,
     handleSubmit,
@@ -25,7 +30,19 @@ export function ResetPasswordScreen({ navigation }: Props) {
     defaultValues: { password: '', confirmPassword: '' },
   });
   const password = useWatch({ control, name: 'password' }) ?? '';
-  const submit = handleSubmit(() => navigation.replace('Login'));
+  const submit = handleSubmit(async values => {
+    setServerError(undefined);
+    try {
+      await resetPassword.mutateAsync({
+        ...values,
+        email: route.params.email,
+        resetToken: route.params.resetToken,
+      });
+      navigation.replace('Login');
+    } catch (error) {
+      setServerError(getApiErrorMessage(error));
+    }
+  });
   return (
     <Screen scroll={false}>
       <AppHeader title="" />
@@ -61,7 +78,17 @@ export function ResetPasswordScreen({ navigation }: Props) {
           />
         )}
       />
-      <PrimaryButton className="mt-10" label="متابعة" onPress={submit} />
+      {serverError ? (
+        <AppText align="center" className="mt-3 text-danger">
+          {serverError}
+        </AppText>
+      ) : null}
+      <PrimaryButton
+        className="mt-10"
+        label="متابعة"
+        loading={resetPassword.isPending}
+        onPress={submit}
+      />
     </Screen>
   );
 }

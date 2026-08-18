@@ -1,19 +1,24 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Controller, useForm } from 'react-hook-form';
 import { AppHeader } from '../../components/AppHeader';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/forms/TextField';
-import type { RootStackParamList } from '../../types/navigation';
 import {
   changePasswordSchema,
   type ChangePasswordForm,
 } from '../../utils/validation';
+import { useChangePasswordMutation } from '../../providers/AuthProvider/hooks';
+import { useAppDispatch } from '../../store/hooks';
+import { signOut } from '../../store/authSlice';
+import { getApiErrorMessage } from '../../api/errors';
+import { useState } from 'react';
+import { AppText } from '../../components/AppText';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'ChangePassword'>;
-
-export function ChangePasswordScreen({ navigation }: Props) {
+export function ChangePasswordScreen() {
+  const dispatch = useAppDispatch();
+  const changePassword = useChangePasswordMutation();
+  const [serverError, setServerError] = useState<string>();
   const {
     control,
     handleSubmit,
@@ -22,7 +27,15 @@ export function ChangePasswordScreen({ navigation }: Props) {
     resolver: zodResolver(changePasswordSchema),
     defaultValues: { currentPassword: '', password: '', confirmPassword: '' },
   });
-  const submit = handleSubmit(() => navigation.goBack());
+  const submit = handleSubmit(async values => {
+    setServerError(undefined);
+    try {
+      await changePassword.mutateAsync(values);
+      dispatch(signOut());
+    } catch (error) {
+      setServerError(getApiErrorMessage(error));
+    }
+  });
   return (
     <Screen scroll={false}>
       <AppHeader title="تغيير كلمة المرور" />
@@ -68,7 +81,17 @@ export function ChangePasswordScreen({ navigation }: Props) {
           />
         )}
       />
-      <PrimaryButton className="mt-8" label="حفظ" onPress={submit} />
+      {serverError ? (
+        <AppText align="center" className="mt-3 text-danger">
+          {serverError}
+        </AppText>
+      ) : null}
+      <PrimaryButton
+        className="mt-8"
+        label="حفظ"
+        loading={changePassword.isPending}
+        onPress={submit}
+      />
     </Screen>
   );
 }

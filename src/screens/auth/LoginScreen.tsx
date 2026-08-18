@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Ionicons from '@react-native-vector-icons/ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Controller, useForm } from 'react-hook-form';
+import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { AppHeader } from '../../components/AppHeader';
 import { AppText } from '../../components/AppText';
@@ -14,11 +15,15 @@ import { useAppDispatch } from '../../store/hooks';
 import { colors } from '../../theme/tokens';
 import type { RootStackParamList } from '../../types/navigation';
 import { loginSchema, type LoginForm } from '../../utils/validation';
+import { useLoginMutation } from '../../providers/AuthProvider/hooks';
+import { getApiErrorMessage } from '../../api/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
 export function LoginScreen({ navigation }: Props) {
   const dispatch = useAppDispatch();
+  const login = useLoginMutation();
+  const [serverError, setServerError] = useState<string>();
   const {
     control,
     handleSubmit,
@@ -28,9 +33,14 @@ export function LoginScreen({ navigation }: Props) {
     defaultValues: { email: '', password: '' },
   });
 
-  const submit = handleSubmit(async () => {
-    dispatch(signIn({ beneficiaryId: 'beneficiary-design-fixture' }));
-    navigation.replace('Main');
+  const submit = handleSubmit(async values => {
+    setServerError(undefined);
+    try {
+      const session = await login.mutateAsync(values);
+      dispatch(signIn(session));
+    } catch (error) {
+      setServerError(getApiErrorMessage(error));
+    }
   });
 
   return (
@@ -75,9 +85,14 @@ export function LoginScreen({ navigation }: Props) {
         className="mb-8 self-start"
         onPress={() => navigation.navigate('ForgotPassword')}
       />
+      {serverError ? (
+        <AppText align="center" className="mb-3 text-danger">
+          {serverError}
+        </AppText>
+      ) : null}
       <PrimaryButton
         label="تسجيل دخول"
-        loading={isSubmitting}
+        loading={isSubmitting || login.isPending}
         onPress={submit}
       />
       <View className="mt-9 flex-row justify-center gap-8">

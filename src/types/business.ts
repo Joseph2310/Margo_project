@@ -23,6 +23,8 @@ export interface BeneficiaryEvent {
   timeLabel: string;
   location: string;
   icon: string;
+  startsAt: string;
+  endsAt: string;
 }
 
 export interface DailyReading {
@@ -30,6 +32,7 @@ export interface DailyReading {
   date: string;
   reference: string;
   title: string;
+  content?: string;
 }
 
 export interface SpiritualActivity {
@@ -46,6 +49,7 @@ export interface ReflectionLesson {
   points: string[];
   exercise: string;
   exercisePoints?: number;
+  completed: boolean;
 }
 
 export interface QuestionCategory {
@@ -67,6 +71,8 @@ export interface KnowMeQuestion {
   label: string;
   askedAt: string;
   isToday?: boolean;
+  points: number;
+  answered: boolean;
 }
 
 export type SenderKind = 'beneficiary' | 'servant';
@@ -78,6 +84,7 @@ export interface ConversationMessage {
   senderName: string;
   kind: MessageKind;
   content: string;
+  createdAt: string;
 }
 
 export interface Conversation {
@@ -85,6 +92,7 @@ export interface Conversation {
   servantName: string;
   preview: string;
   messages: ConversationMessage[];
+  status: 'active' | 'blocked' | 'deleted';
 }
 
 export interface SuggestionPayload {
@@ -93,4 +101,48 @@ export interface SuggestionPayload {
   hymnSuggestion: string;
   hymnRating: number;
   anonymous: boolean;
+}
+
+export interface HomeDashboard {
+  profile: BeneficiaryProfile;
+  upcomingEvents: BeneficiaryEvent[];
+  dailyReading?: DailyReading;
+  questionCategories: QuestionCategory[];
+  knowMeQuestions: KnowMeQuestion[];
+}
+
+export interface RetreatSubmissionPayload {
+  activityIds: string[];
+  reflection?: string;
+}
+
+export interface QuestionProposalResponse {
+  id: string;
+  status: 'pending' | 'approved' | 'rejected';
+  message: string;
+}
+
+export interface SendMessagePayload {
+  conversationId?: string;
+  content: string;
+  kind: MessageKind;
+  anonymous: boolean;
+}
+
+export interface SendMessageResponse {
+  conversationId: string;
+  message: ConversationMessage;
+}
+
+export interface SuggestionResponse {
+  id: string;
+  message: string;
+}
+
+export interface NotificationItem {
+  id: string;
+  title: string;
+  body: string;
+  isRead: boolean;
+  createdAt: string;
 }

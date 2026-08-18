@@ -1,0 +1,102 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-beneficiaries}
+      POSTGRES_USER: ${POSTGRES_USER:-beneficiaries}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-beneficiaries}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - beneficiaries_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-beneficiaries} -d ${POSTGRES_DB:-beneficiaries}',
+        ]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: ./backend
+    environment:
+      APP_NAME: ${APP_NAME:-Beneficiaries API}
+      APP_VERSION: ${APP_VERSION:-1.0.0}
+      APP_ENV: ${APP_ENV:-development}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      API_PREFIX: ${API_PREFIX:-/api/v1}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://beneficiaries:beneficiaries@db:5432/beneficiaries}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-this-development-secret-before-hosting}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-30}
+      PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: ${PASSWORD_RESET_TOKEN_EXPIRE_MINUTES:-15}
+      VERIFICATION_CODE_TTL_SECONDS: ${VERIFICATION_CODE_TTL_SECONDS:-600}
+      VERIFICATION_MAX_ATTEMPTS: ${VERIFICATION_MAX_ATTEMPTS:-5}
+      DEV_VERIFICATION_CODE: ${DEV_VERIFICATION_CODE:-123456}
+      EXPOSE_VERIFICATION_CODE: ${EXPOSE_VERIFICATION_CODE:-true}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-noreply@example.com}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
+      SMTP_USE_SSL: ${SMTP_USE_SSL:-false}
+      SMTP_TIMEOUT_SECONDS: ${SMTP_TIMEOUT_SECONDS:-10}
+      AUTO_SEED: ${AUTO_SEED:-true}
+      DEMO_USER_EMAIL: ${DEMO_USER_EMAIL:-joy.barakat@hotmail.com}
+      DEMO_USER_PASSWORD: ${DEMO_USER_PASSWORD:-Password1}
+      WHATSAPP_GROUP_URL: ${WHATSAPP_GROUP_URL:-}
+    command: >-
+      sh -c "alembic upgrade head &&
+      python -m app.seed &&
+      uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '${API_PORT:-8000}:8000'
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  backend-test:
+    profiles: ['tools']
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.test
+    environment:
+      API_BASE_URL: http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+
+  frontend-check:
+    profiles: ['tools']
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend-check
+    command: npm run typecheck
+
+  frontend-lint:
+    profiles: ['tools']
+    image: beneficiariesapp-frontend-check:latest
+    command: npm run lint
+
+  frontend-test:
+    profiles: ['tools']
+    image: beneficiariesapp-frontend-check:latest
+    command: npm test -- --runInBand
+
+volumes:
+  beneficiaries_postgres_data:

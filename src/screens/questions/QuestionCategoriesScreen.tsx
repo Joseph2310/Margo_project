@@ -4,7 +4,7 @@ import { AppHeader } from '../../components/AppHeader';
 import { Screen } from '../../components/Screen';
 import { QuestionCategoryCard } from '../../components/cards/QuestionCategoryCard';
 import { QueryState } from '../../components/feedback/QueryState';
-import { useQuestionCategoriesQuery } from '../../hooks/useDesignContent';
+import { useQuestionCategoriesQuery } from '../../providers/QuestionsProvider/hooks';
 import type { RootStackParamList } from '../../types/navigation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'QuestionCategories'>;

@@ -5,7 +5,7 @@ import { AppText } from '../../components/AppText';
 import { Screen } from '../../components/Screen';
 import { EventCard } from '../../components/cards/EventCard';
 import { QueryState } from '../../components/feedback/QueryState';
-import { useEventsQuery } from '../../hooks/useDesignContent';
+import { useEventsQuery } from '../../providers/EventsProvider/hooks';
 
 const days = [
   { letter: 'S', value: 1 },

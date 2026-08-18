@@ -7,6 +7,9 @@ import { Screen } from '../../components/Screen';
 import { IdentityToggle } from '../../components/forms/IdentityToggle';
 import { RatingControl } from '../../components/forms/RatingControl';
 import { colors } from '../../theme/tokens';
+import { useSuggestionMutation } from '../../providers/SuggestionsProvider/hooks';
+import { Alert } from 'react-native';
+import { getApiErrorMessage } from '../../api/errors';
 
 const fields = [
   { key: 'general', label: 'اقتراحاتك لمدارس الاحد' },
@@ -21,7 +24,24 @@ export function SuggestionsScreen() {
   const [rating, setRating] = useState(0);
   const [anonymous, setAnonymous] = useState(true);
   const [sent, setSent] = useState(false);
+  const submitSuggestion = useSuggestionMutation();
   const canSend = Object.values(values).some(Boolean) || rating > 0;
+  const submit = async () => {
+    try {
+      await submitSuggestion.mutateAsync({
+        generalSuggestion: values.general,
+        lessonSuggestion: values.lessons,
+        hymnSuggestion: values.hymns,
+        hymnRating: rating,
+        anonymous,
+      });
+      setSent(true);
+      setValues({ general: '', lessons: '', hymns: '' });
+      setRating(0);
+    } catch (error) {
+      Alert.alert('تعذر إرسال المقترحات', getApiErrorMessage(error));
+    }
+  };
   return (
     <Screen>
       <AppHeader title="الاقتراحات" />
@@ -55,11 +75,8 @@ export function SuggestionsScreen() {
       <PrimaryButton
         label="إرسال"
         disabled={!canSend}
-        onPress={() => {
-          setSent(true);
-          setValues({ general: '', lessons: '', hymns: '' });
-          setRating(0);
-        }}
+        loading={submitSuggestion.isPending}
+        onPress={submit}
       />
     </Screen>
   );

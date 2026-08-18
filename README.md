@@ -1,39 +1,67 @@
-# تطبيق المخدومين
+# Beneficiaries application
 
-React Native CLI + TypeScript implementation of the Beneficiaries application represented by the supplied `Extracted_figma` package. This project intentionally contains no Servants / Service Providers application.
-
-## Implemented scope
-
-- Registration, six-digit verification, login, biometric entry UI, password recovery, and password change
-- Arabic RTL five-tab shell: `الرئيسية`, `الخلوة`, `البيت`, `البروفايل`, `المزيد`
-- Home, daily reading, upcoming events, `تعرفيني؟`, question bank, and proposed questions
-- `الخلوة`, spiritual activity checklist, and `الريفلكشن`
-- Servant conversations, named/anonymous identity, and text/image/voice composer affordances
-- Suggestions, hymn rating, profile editing, points, attendance QR, WhatsApp entry, notifications entry, and logout
+Arabic RTL React Native application with a FastAPI/PostgreSQL backend. The API and mobile flows implement the supplied Beneficiaries design: authentication, beneficiary profile and points, readings and events, question activities, retreat/reflection, conversations, suggestions, and notifications.
 
 ## Architecture
 
-The code uses the requested layer-based structure under `src/`:
+### Backend
 
-- `api/`: Axios client configuration only; no unknown URL is assumed
-- `services/`: typed backend integration boundaries
-- `hooks/`: reusable behavior and TanStack Query adapters
-- `screens/`: screen composition
-- `components/`: shared UI patterns
-- `navigation/`: root stack and bottom tabs
-- `providers/`: Redux, Query, safe-area, and gesture providers
-- `store/`: Redux Toolkit client state with MMKV persistence
-- `theme/`: centralized Figma-derived tokens
-- `constants/`: design fixtures and confirmed business terminology
-- `types/` and `utils/`: shared contracts and helpers
+- FastAPI with generated OpenAPI, Swagger UI, ReDoc, and a consistent JSON error model
+- PostgreSQL 16, SQLAlchemy 2, Alembic migrations, and development seed data
+- JWT access tokens plus rotating/revocable refresh tokens
+- Argon2 password hashing, expiring verification codes, reset tokens, and attempt limits
+- Server-owned points, attendance QR values, submission status, and duplicate-award rules
+- Configurable SMTP delivery for registration and password-reset codes
+- Docker Compose services for the database, API, backend integration tests, and frontend checks
 
-## Backend integration status
+The API is grouped under `/api/v1`:
 
-Swagger/API contracts were not supplied. The app therefore uses typed design fixtures through TanStack Query, makes no network requests, and does not invent endpoints, approval states, point calculations, or attendance-validation rules. Replace the preview query functions with implementations of the interfaces in `src/services/` after the backend contract is confirmed.
+- `/auth`: registration, verification, login, refresh, logout, and password recovery/change
+- `/profile`: beneficiary profile and WhatsApp community link
+- `/home`, `/events`, `/readings`: home feed and content
+- `/questions`: categories, questions, proposed questions, and `Know Me`
+- `/retreat`: activities, submissions, reflection, and server-awarded points
+- `/conversations`: servant/group conversations, messages, blocking, and deletion
+- `/suggestions`: general suggestions and hymn ratings
+- `/notifications`: list, mark one read, or mark all read
 
-## Local setup
+The exact request/response models and error responses are the generated OpenAPI contract.
 
-Requires Node.js 22.11+ and the standard React Native Android/iOS environment.
+### Frontend
+
+- `src/api/`: Axios configuration, bearer injection, refresh-token rotation, retry, and normalized errors
+- `src/services/`: typed calls grouped by backend API domain
+- `src/providers/`: TanStack Query hooks/mutations and authentication provider behavior
+- `src/types/`: TypeScript request/response models matching FastAPI's camel-case JSON models
+- `src/screens/` and `src/components/`: consume provider hooks; they do not call the API directly
+- `src/store/`: persisted authentication/UI state only; server data remains in TanStack Query
+
+In development, the API host is derived from Metro's script URL. This lets an emulator or physical device use the computer running Metro and Docker without hard-coding an address. Production builds must replace `PRODUCTION_API_BASE_URL` in `src/config/environment.ts` or set `global.__API_BASE_URL__` before the bundle is evaluated.
+
+## Run locally
+
+Requirements: Docker, Docker Compose, Node.js 22.11+, JDK 17, and the standard React Native Android/iOS environment.
+
+```sh
+cp .env.example .env
+docker compose up -d --build db api
+```
+
+Development URLs:
+
+- API health: `http://localhost:8000/health`
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+- OpenAPI JSON: `http://localhost:8000/openapi.json`
+- Versioned OpenAPI snapshot: `backend/openapi.json`
+
+Seeded development account:
+
+- Email: `joy.barakat@hotmail.com`
+- Password: `Password1`
+- Verification code: `123456`
+
+Then run the mobile app:
 
 ```sh
 npm ci
@@ -46,15 +74,28 @@ For iOS, run `bundle install` and `bundle exec pod install` from `ios/` on macOS
 ## Validation
 
 ```sh
+docker compose --profile tools up --build --force-recreate backend-test
+bash backend/scripts/smoke_test.sh
 npm run typecheck
 npm run lint
 npm run format:check
 npm test -- --runInBand
-npx react-native bundle --platform android --dev false --entry-file index.js \
-  --bundle-output /tmp/beneficiaries.android.bundle \
-  --assets-dest /tmp/beneficiaries-assets
+
+cd android
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ./gradlew :app:assembleDebug
 ```
 
-## Design-source limitations
+The debug APK is written to `android/app/build/outputs/apk/debug/app-debug.apk`.
 
-The package contains screen exports, one Figma PDF, a splash image, and tick-circle SVGs. It does not contain the original font files, event artwork, profile photo, church background image, app logo, Figma prototype links, or backend contracts. Where those original assets are unavailable, the implementation uses design-token-matched shapes and icons without introducing new business behavior.
+## Hosting configuration
+
+All backend settings are environment variables; `.env.example` is the deployment checklist. For production:
+
+- Set a long random `JWT_SECRET_KEY` and production `DATABASE_URL`.
+- Set `APP_ENV=production`, `AUTO_SEED=false`, and `EXPOSE_VERIFICATION_CODE=false`.
+- Configure `CORS_ORIGINS` as a comma-separated allowlist.
+- Configure `SMTP_HOST`, port, credentials, sender, and TLS/SSL options. If codes are hidden and SMTP is absent, verification returns a documented `503` instead of silently losing the code.
+- Set the optional `WHATSAPP_GROUP_URL`.
+- Run `alembic upgrade head` before starting Uvicorn/Gunicorn workers.
+
+Do not use the Compose development database password, demo account, debug signing key, or placeholder production mobile URL in a hosted release.

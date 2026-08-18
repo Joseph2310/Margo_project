@@ -7,22 +7,31 @@ import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/forms/TextField';
 import type { RootStackParamList } from '../../types/navigation';
 import { emailSchema } from '../../utils/validation';
+import { useForgotPasswordMutation } from '../../providers/AuthProvider/hooks';
+import { getApiErrorMessage } from '../../api/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ForgotPassword'>;
 
 export function ForgotPasswordScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string>();
-  const send = () => {
+  const forgotPassword = useForgotPasswordMutation();
+  const send = async () => {
     const result = emailSchema.safeParse(email);
     if (!result.success) {
       setError(result.error.issues[0]?.message ?? 'البريد الالكتروني غير صحيح');
       return;
     }
-    navigation.navigate('Verification', {
-      mode: 'passwordReset',
-      email: result.data,
-    });
+    try {
+      const challenge = await forgotPassword.mutateAsync(result.data);
+      navigation.navigate('Verification', {
+        mode: 'passwordReset',
+        email: result.data,
+        debugCode: challenge.verificationCode,
+      });
+    } catch (requestError) {
+      setError(getApiErrorMessage(requestError));
+    }
   };
   return (
     <Screen scroll={false}>
@@ -46,7 +55,12 @@ export function ForgotPasswordScreen({ navigation }: Props) {
           setError(undefined);
         }}
       />
-      <PrimaryButton className="mb-8 mt-auto" label="إرسال" onPress={send} />
+      <PrimaryButton
+        className="mb-8 mt-auto"
+        label="إرسال"
+        loading={forgotPassword.isPending}
+        onPress={send}
+      />
     </Screen>
   );
 }

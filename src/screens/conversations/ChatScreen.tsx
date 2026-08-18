@@ -1,47 +1,46 @@
 import Ionicons from '@react-native-vector-icons/ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
+import { Alert } from 'react-native';
 import { View } from 'react-native';
 import { ChurchBackdrop } from '../../components/ChurchBackdrop';
 import { AppHeader } from '../../components/AppHeader';
 import { AppText } from '../../components/AppText';
 import { Screen } from '../../components/Screen';
 import { MessageComposer } from '../../components/forms/MessageComposer';
-import { conversationsFixture } from '../../constants/business';
-import type { ConversationMessage } from '../../types/business';
 import type { RootStackParamList } from '../../types/navigation';
 import { colors } from '../../theme/tokens';
+import {
+  useConversationQuery,
+  useSendMessageMutation,
+} from '../../providers/ConversationsProvider/hooks';
+import { QueryState } from '../../components/feedback/QueryState';
+import { getApiErrorMessage } from '../../api/errors';
+import { useProfileQuery } from '../../providers/ProfileProvider/hooks';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
 export function ChatScreen({ route }: Props) {
-  const conversation = useMemo(
-    () =>
-      conversationsFixture.find(
-        item => item.id === route.params.conversationId,
-      ),
-    [route.params.conversationId],
-  );
-  const [messages, setMessages] = useState<ConversationMessage[]>(
-    conversation?.messages ?? [],
-  );
+  const conversation = useConversationQuery(route.params.conversationId);
+  const sendMessage = useSendMessageMutation(route.params.conversationId);
+  const profile = useProfileQuery();
   const [message, setMessage] = useState('');
   const [anonymous, setAnonymous] = useState(
     route.params.conversationId === 'all',
   );
-  const send = () => {
+  const send = async () => {
     if (!message.trim()) return;
-    setMessages(current => [
-      ...current,
-      {
-        id: `local-${Date.now()}`,
-        sender: 'beneficiary',
-        senderName: anonymous ? 'مجهول الهوية' : 'جوي بركات',
-        kind: 'text',
+    try {
+      await sendMessage.mutateAsync({
+        conversationId: route.params.conversationId,
         content: message.trim(),
-      },
-    ]);
-    setMessage('');
+        kind: 'text',
+        anonymous,
+      });
+      setMessage('');
+    } catch (error) {
+      Alert.alert('تعذر إرسال الرسالة', getApiErrorMessage(error));
+    }
   };
   return (
     <Screen scroll={false} padded={false}>
@@ -53,7 +52,12 @@ export function ChatScreen({ route }: Props) {
           <AppHeader title="البيت" />
         </View>
         <View className="flex-1 px-5">
-          {!messages.length ? (
+          <QueryState
+            loading={conversation.isLoading}
+            error={conversation.isError}
+            onRetry={() => conversation.refetch()}
+          />
+          {!conversation.isLoading && !conversation.data?.messages.length ? (
             <View className="flex-1 items-center justify-center px-8">
               <AppText
                 align="center"
@@ -63,7 +67,7 @@ export function ChatScreen({ route }: Props) {
             </View>
           ) : (
             <View className="gap-5">
-              {messages.map(item => {
+              {conversation.data?.messages.map(item => {
                 const mine = item.sender === 'beneficiary';
                 return (
                   <View
@@ -96,6 +100,8 @@ export function ChatScreen({ route }: Props) {
         <MessageComposer
           value={message}
           anonymous={anonymous}
+          senderName={profile.data?.name}
+          sending={sendMessage.isPending}
           onChangeText={setMessage}
           onIdentityChange={setAnonymous}
           onSend={send}

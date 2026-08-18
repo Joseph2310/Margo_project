@@ -7,6 +7,8 @@ import { AppText } from '../AppText';
 interface Props {
   value: string;
   anonymous: boolean;
+  senderName?: string;
+  sending?: boolean;
   onChangeText: (value: string) => void;
   onIdentityChange: (anonymous: boolean) => void;
   onSend: () => void;
@@ -15,6 +17,8 @@ interface Props {
 export function MessageComposer({
   value,
   anonymous,
+  senderName,
+  sending = false,
   onChangeText,
   onIdentityChange,
   onSend,
@@ -22,7 +26,7 @@ export function MessageComposer({
   return (
     <View className="border-t border-primary/20 bg-chat-panel/90 p-4">
       <AppText className="mb-1 text-caption text-muted">
-        {anonymous ? 'مجهول الهوية' : 'جوي بركات'}
+        {anonymous ? 'مجهول الهوية' : (senderName ?? '')}
       </AppText>
       <View className="mb-3 flex-row-reverse items-center gap-3">
         <TextInput
@@ -35,11 +39,11 @@ export function MessageComposer({
         />
         <Ionicons name="mic" size={20} color={colors.primary} />
         <Ionicons name="image" size={20} color={colors.primary} />
-        <Pressable disabled={!value.trim()} onPress={onSend}>
+        <Pressable disabled={!value.trim() || sending} onPress={onSend}>
           <Ionicons
             name="send"
             size={21}
-            color={value.trim() ? colors.primary : colors.muted}
+            color={value.trim() && !sending ? colors.primary : colors.muted}
           />
         </Pressable>
       </View>

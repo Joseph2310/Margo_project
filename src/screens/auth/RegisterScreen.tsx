@@ -3,6 +3,7 @@ import type { IoniconsIconName } from '@react-native-vector-icons/ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { View } from 'react-native';
+import { useState } from 'react';
 import { AppHeader } from '../../components/AppHeader';
 import { AppText } from '../../components/AppText';
 import { LinkButton } from '../../components/LinkButton';
@@ -15,6 +16,9 @@ import {
   registrationSchema,
   type RegistrationForm,
 } from '../../utils/validation';
+import { useRegisterMutation } from '../../providers/AuthProvider/hooks';
+import { getApiErrorMessage } from '../../api/errors';
+import { splitTalents } from '../../utils/format';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Register'>;
 
@@ -60,6 +64,8 @@ const fields: Array<{
 ];
 
 export function RegisterScreen({ navigation }: Props) {
+  const register = useRegisterMutation();
+  const [serverError, setServerError] = useState<string>();
   const {
     control,
     handleSubmit,
@@ -83,12 +89,23 @@ export function RegisterScreen({ navigation }: Props) {
     },
   });
   const password = useWatch({ control, name: 'password' }) ?? '';
-  const submit = handleSubmit(values =>
-    navigation.navigate('Verification', {
-      mode: 'registration',
-      email: values.email,
-    }),
-  );
+  const submit = handleSubmit(async values => {
+    setServerError(undefined);
+    const { talentsText, ...fieldsPayload } = values;
+    try {
+      const challenge = await register.mutateAsync({
+        ...fieldsPayload,
+        talents: splitTalents(talentsText ?? ''),
+      });
+      navigation.navigate('Verification', {
+        mode: 'registration',
+        email: values.email,
+        debugCode: challenge.verificationCode,
+      });
+    } catch (error) {
+      setServerError(getApiErrorMessage(error));
+    }
+  });
 
   return (
     <Screen>
@@ -167,10 +184,15 @@ export function RegisterScreen({ navigation }: Props) {
         )}
       />
       <PasswordRules password={password} />
+      {serverError ? (
+        <AppText align="center" className="mt-3 text-danger">
+          {serverError}
+        </AppText>
+      ) : null}
       <PrimaryButton
         className="mt-4"
         label="إنشاء حساب"
-        loading={isSubmitting}
+        loading={isSubmitting || register.isPending}
         onPress={submit}
       />
       <View className="mt-6 flex-row-reverse justify-center gap-1">

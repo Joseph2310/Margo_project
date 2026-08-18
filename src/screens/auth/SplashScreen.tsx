@@ -1,24 +1,37 @@
-import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useEffect } from 'react';
 import { Image, View } from 'react-native';
-import type { RootStackParamList } from '../../types/navigation';
 import { completeSplash } from '../../store/authSlice';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { colors } from '../../theme/tokens';
+import { useRefreshSessionMutation } from '../../providers/AuthProvider/hooks';
+import { signIn, signOut } from '../../store/authSlice';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Splash'>;
-
-export function SplashScreen({ navigation }: Props) {
+export function SplashScreen() {
   const dispatch = useAppDispatch();
-  const isAuthenticated = useAppSelector(state => state.auth.isAuthenticated);
+  const refreshToken = useAppSelector(state => state.auth.refreshToken);
+  const { mutateAsync: refreshSession } = useRefreshSessionMutation();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    let active = true;
+    const timer = setTimeout(async () => {
       dispatch(completeSplash());
-      navigation.replace(isAuthenticated ? 'Main' : 'Login');
+      if (!refreshToken) {
+        return;
+      }
+      try {
+        const session = await refreshSession(refreshToken);
+        if (!active) return;
+        dispatch(signIn(session));
+      } catch {
+        if (!active) return;
+        dispatch(signOut());
+      }
     }, 900);
-    return () => clearTimeout(timer);
-  }, [dispatch, isAuthenticated, navigation]);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [dispatch, refreshSession, refreshToken]);
 
   return (
     <View

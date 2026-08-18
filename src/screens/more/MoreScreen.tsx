@@ -10,12 +10,16 @@ import { signOut } from '../../store/authSlice';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { colors } from '../../theme/tokens';
 import type { RootStackParamList } from '../../types/navigation';
+import { useProfileQuery } from '../../providers/ProfileProvider/hooks';
+import { useLogoutMutation } from '../../providers/AuthProvider/hooks';
 
 export function MoreScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const dispatch = useAppDispatch();
-  const profile = useAppSelector(state => state.profile.beneficiary);
+  const refreshToken = useAppSelector(state => state.auth.refreshToken);
+  const profile = useProfileQuery();
+  const logoutMutation = useLogoutMutation();
   const items: Array<{
     label: string;
     icon: IoniconsIconName;
@@ -43,9 +47,15 @@ export function MoreScreen() {
       {
         text: 'تسجيل الخروج',
         style: 'destructive',
-        onPress: () => {
+        onPress: async () => {
+          if (refreshToken) {
+            try {
+              await logoutMutation.mutateAsync(refreshToken);
+            } catch {
+              // Local logout must still complete if the remote session expired.
+            }
+          }
           dispatch(signOut());
-          navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
         },
       },
     ]);
@@ -59,7 +69,7 @@ export function MoreScreen() {
           <Ionicons name="person" size={28} color={colors.primary} />
         </View>
         <AppText className="text-label mr-4 font-bold text-primary">
-          {profile.name}
+          {profile.data?.name ?? ''}
         </AppText>
       </View>
       {items.map(item => (

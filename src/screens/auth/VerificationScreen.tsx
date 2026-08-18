@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Controller, useForm } from 'react-hook-form';
+import { useState } from 'react';
 import { View } from 'react-native';
 import { AppHeader } from '../../components/AppHeader';
 import { AppText } from '../../components/AppText';
@@ -17,13 +18,22 @@ import {
   verificationSchema,
   type VerificationForm,
 } from '../../utils/validation';
+import {
+  useResendVerificationMutation,
+  useVerifyMutation,
+} from '../../providers/AuthProvider/hooks';
+import { getApiErrorMessage } from '../../api/errors';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Verification'>;
 
 export function VerificationScreen({ route, navigation }: Props) {
   const dispatch = useAppDispatch();
+  const verify = useVerifyMutation();
+  const resend = useResendVerificationMutation();
   const { seconds, restart } = useCountdown(60);
   const { mode, email } = route.params;
+  const [serverError, setServerError] = useState<string>();
+  const [debugCode, setDebugCode] = useState(route.params.debugCode);
   const {
     control,
     handleSubmit,
@@ -38,14 +48,41 @@ export function VerificationScreen({ route, navigation }: Props) {
     ? 'ادخل كود تفعيل الحساب المرسل لك'
     : 'من فضلك ادخل كود التسجيل الذى تم ارساله الى بريدك الالكترونى';
 
-  const submit = handleSubmit(() => {
-    if (mode === 'passwordReset') {
-      navigation.replace('ResetPassword', { email });
-      return;
+  const submit = handleSubmit(async values => {
+    setServerError(undefined);
+    try {
+      const result = await verify.mutateAsync({
+        email,
+        mode,
+        code: values.code,
+      });
+      if (mode === 'passwordReset') {
+        if (!result.passwordResetToken) {
+          throw new Error('لم يتم إصدار رمز إعادة تعيين كلمة المرور');
+        }
+        navigation.replace('ResetPassword', {
+          email,
+          resetToken: result.passwordResetToken,
+        });
+        return;
+      }
+      if (!result.session) throw new Error('تعذر بدء جلسة المستخدم');
+      dispatch(signIn(result.session));
+    } catch (error) {
+      setServerError(getApiErrorMessage(error));
     }
-    dispatch(signIn({ beneficiaryId: 'beneficiary-design-fixture' }));
-    navigation.replace('Main');
   });
+
+  const resendCode = async () => {
+    setServerError(undefined);
+    try {
+      const challenge = await resend.mutateAsync({ email, mode });
+      setDebugCode(challenge.verificationCode);
+      restart();
+    } catch (error) {
+      setServerError(getApiErrorMessage(error));
+    }
+  };
 
   return (
     <Screen scroll={false}>
@@ -57,6 +94,11 @@ export function VerificationScreen({ route, navigation }: Props) {
         <AppText align="center" className="mt-2 px-10 text-body">
           {description}
         </AppText>
+        {debugCode ? (
+          <AppText align="center" className="text-small mt-2 text-muted">
+            كود بيئة الاختبار: {debugCode}
+          </AppText>
+        ) : null}
       </View>
       <Controller
         control={control}
@@ -81,11 +123,20 @@ export function VerificationScreen({ route, navigation }: Props) {
         ) : (
           <View className="flex-row-reverse gap-1">
             <AppText className="text-small">لم تستقبل كود</AppText>
-            <LinkButton label="إعادة إرسال؟" onPress={restart} />
+            <LinkButton label="إعادة إرسال؟" onPress={resendCode} />
           </View>
         )}
       </View>
-      <PrimaryButton label="متابعة" loading={isSubmitting} onPress={submit} />
+      {serverError ? (
+        <AppText align="center" className="mb-3 text-danger">
+          {serverError}
+        </AppText>
+      ) : null}
+      <PrimaryButton
+        label="متابعة"
+        loading={isSubmitting || verify.isPending || resend.isPending}
+        onPress={submit}
+      />
     </Screen>
   );
 }

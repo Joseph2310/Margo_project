@@ -6,15 +6,18 @@ import { AppText } from '../../components/AppText';
 import { Screen } from '../../components/Screen';
 import { QuestionCard } from '../../components/cards/QuestionCard';
 import { QueryState } from '../../components/feedback/QueryState';
-import { questionCategoriesFixture } from '../../constants/business';
-import { useQuestionsQuery } from '../../hooks/useDesignContent';
+import {
+  useQuestionCategoriesQuery,
+  useQuestionsQuery,
+} from '../../providers/QuestionsProvider/hooks';
 import { colors } from '../../theme/tokens';
 import type { RootStackParamList } from '../../types/navigation';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'QuestionList'>;
 
 export function QuestionListScreen({ route, navigation }: Props) {
-  const category = questionCategoriesFixture.find(
+  const categories = useQuestionCategoriesQuery();
+  const category = categories.data?.find(
     item => item.id === route.params.categoryId,
   );
   const questions = useQuestionsQuery(route.params.categoryId);

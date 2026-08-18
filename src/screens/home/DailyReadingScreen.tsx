@@ -3,7 +3,7 @@ import { AppHeader } from '../../components/AppHeader';
 import { AppText } from '../../components/AppText';
 import { Screen } from '../../components/Screen';
 import { QueryState } from '../../components/feedback/QueryState';
-import { useDailyReadingQuery } from '../../hooks/useDesignContent';
+import { useDailyReadingQuery } from '../../providers/HomeProvider/hooks';
 
 export function DailyReadingScreen() {
   const reading = useDailyReadingQuery();

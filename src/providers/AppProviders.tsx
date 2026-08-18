@@ -5,11 +5,23 @@ import { Provider as ReduxProvider } from 'react-redux';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { store } from '../store';
+import { configureApiClient } from '../api/apiClient';
+import { signIn, signOut } from '../store/authSlice';
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { staleTime: 60_000, retry: 1, refetchOnWindowFocus: false },
     mutations: { retry: 0 },
+  },
+});
+
+configureApiClient({
+  getAccessToken: () => store.getState().auth.accessToken,
+  getRefreshToken: () => store.getState().auth.refreshToken,
+  onSession: session => store.dispatch(signIn(session)),
+  onUnauthorized: () => {
+    store.dispatch(signOut());
+    queryClient.clear();
   },
 });
 

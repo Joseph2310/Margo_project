@@ -2,18 +2,27 @@ import Ionicons from '@react-native-vector-icons/ionicons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { Alert, Pressable, TextInput, View } from 'react-native';
+import { useDeferredValue, useState } from 'react';
 import { ChurchBackdrop } from '../../components/ChurchBackdrop';
 import { AppText } from '../../components/AppText';
 import { Screen } from '../../components/Screen';
 import { QueryState } from '../../components/feedback/QueryState';
-import { useConversationsQuery } from '../../hooks/useDesignContent';
+import {
+  useBlockConversationMutation,
+  useConversationsQuery,
+  useDeleteConversationMutation,
+} from '../../providers/ConversationsProvider/hooks';
 import { colors } from '../../theme/tokens';
 import type { RootStackParamList } from '../../types/navigation';
 
 export function HouseScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const conversations = useConversationsQuery();
+  const [search, setSearch] = useState('');
+  const deferredSearch = useDeferredValue(search);
+  const conversations = useConversationsQuery(deferredSearch);
+  const deleteConversation = useDeleteConversationMutation();
+  const blockConversation = useBlockConversationMutation();
   return (
     <Screen scroll={false} padded={false} bottomInset={false}>
       <View className="absolute inset-0">
@@ -29,6 +38,8 @@ export function HouseScreen() {
             className="flex-1 px-3 text-right text-ink"
             placeholder="بحث عن المحادثات"
             placeholderTextColor={colors.muted}
+            value={search}
+            onChangeText={setSearch}
           />
         </View>
         <QueryState
@@ -61,8 +72,13 @@ export function HouseScreen() {
                   {
                     text: `حظر ${conversation.servantName}`,
                     style: 'destructive',
+                    onPress: () => blockConversation.mutate(conversation.id),
                   },
-                  { text: 'إزالة المحادثة', style: 'destructive' },
+                  {
+                    text: 'إزالة المحادثة',
+                    style: 'destructive',
+                    onPress: () => deleteConversation.mutate(conversation.id),
+                  },
                   { text: 'إلغاء', style: 'cancel' },
                 ])
               }>

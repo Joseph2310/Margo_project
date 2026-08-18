@@ -9,15 +9,30 @@ import { signIn } from '../../store/authSlice';
 import { useAppDispatch } from '../../store/hooks';
 import { colors } from '../../theme/tokens';
 import type { RootStackParamList } from '../../types/navigation';
+import { useRefreshSessionMutation } from '../../providers/AuthProvider/hooks';
+import { useState } from 'react';
+import { getApiErrorMessage } from '../../api/errors';
+import { useAppSelector } from '../../store/hooks';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'BiometricLogin'>;
 
 export function BiometricLoginScreen({ route, navigation }: Props) {
   const dispatch = useAppDispatch();
+  const refresh = useRefreshSessionMutation();
+  const refreshToken = useAppSelector(state => state.auth.refreshToken);
+  const [serverError, setServerError] = useState<string>();
   const isFace = route.params.mode === 'face';
-  const login = () => {
-    dispatch(signIn({ beneficiaryId: 'beneficiary-design-fixture' }));
-    navigation.replace('Main');
+  const login = async () => {
+    if (!refreshToken) {
+      navigation.replace('Login');
+      return;
+    }
+    try {
+      const session = await refresh.mutateAsync(refreshToken);
+      dispatch(signIn(session));
+    } catch (error) {
+      setServerError(getApiErrorMessage(error));
+    }
   };
   return (
     <Screen scroll={false}>
@@ -35,6 +50,11 @@ export function BiometricLoginScreen({ route, navigation }: Props) {
           color={colors.biometricIcon}
         />
       </Pressable>
+      {serverError ? (
+        <AppText align="center" className="mb-3 text-danger">
+          {serverError}
+        </AppText>
+      ) : null}
       <View className="mb-6 flex-row items-center gap-4">
         <View className="h-px flex-1 bg-line" />
         <AppText align="center">أو</AppText>
