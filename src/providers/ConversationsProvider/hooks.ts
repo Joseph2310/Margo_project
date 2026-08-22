@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { conversationsService } from '../../services/conversationsService';
 import { queryKeys } from '../queryKeys';
+import type { Conversation } from '../../types/business';
 
 export const useConversationsQuery = (search = '') =>
   useQuery({
@@ -15,18 +16,38 @@ export const useConversationQuery = (conversationId: string) =>
     enabled: Boolean(conversationId),
   });
 
-export const useSendMessageMutation = (conversationId: string) => {
+export const useSendMessageMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: conversationsService.sendMessage,
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.conversation(conversationId),
-        }),
-        queryClient.invalidateQueries({ queryKey: ['conversations'] }),
-      ]);
+    onSuccess: async response => {
+      queryClient.setQueryData<Conversation>(
+        queryKeys.conversation(response.conversationId),
+        current => {
+          if (!current) return current;
+          const messages = current.messages.some(
+            message => message.id === response.message.id,
+          )
+            ? current.messages.map(message =>
+                message.id === response.message.id ? response.message : message,
+              )
+            : [...current.messages, response.message];
+          return { ...current, messages, preview: response.message.content };
+        },
+      );
+      await queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
+  });
+};
+
+export const useMarkConversationReadMutation = (conversationId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => conversationsService.markConversationRead(conversationId),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.conversation(conversationId),
+      }),
   });
 };
 

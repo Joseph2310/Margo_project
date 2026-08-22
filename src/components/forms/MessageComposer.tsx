@@ -37,8 +37,6 @@ export function MessageComposer({
           onChangeText={onChangeText}
           onSubmitEditing={onSend}
         />
-        <Ionicons name="mic" size={20} color={colors.primary} />
-        <Ionicons name="image" size={20} color={colors.primary} />
         <Pressable disabled={!value.trim() || sending} onPress={onSend}>
           <Ionicons
             name="send"

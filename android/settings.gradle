@@ -1,6 +1,34 @@
 pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
 plugins { id("com.facebook.react.settings") }
-extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
+
+// Generate the React Native autolinking model deterministically from the
+// project-local CLI. The plugin default shells out through `npx`, which can
+// leave the model missing in WSL/USB development environments even though the
+// dependencies are already installed locally.
+def projectDirectory = file("..")
+def reactNativeCli = file("../node_modules/@react-native-community/cli/build/bin.js")
+def autolinkingSource = file("build/generated/autolinking/autolinking-source.json")
+
+if (!reactNativeCli.exists()) {
+    throw new GradleException(
+        "React Native CLI is missing. Run `npm ci` from ${projectDirectory}."
+    )
+}
+
+autolinkingSource.parentFile.mkdirs()
+def autolinkingOutput = providers.exec {
+    workingDir(projectDirectory)
+    commandLine("node", reactNativeCli.absolutePath, "config")
+}.standardOutput.asText.get()
+
+if (autolinkingOutput.trim().isEmpty()) {
+    throw new GradleException("React Native CLI returned an empty autolinking configuration.")
+}
+autolinkingSource.text = autolinkingOutput
+
+extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
+    ex.autolinkLibrariesFromConfigFile(autolinkingSource)
+}
 rootProject.name = 'BeneficiariesApp'
 include ':app'
 includeBuild('../node_modules/@react-native/gradle-plugin')

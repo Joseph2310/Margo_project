@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { store } from '../store';
 import { configureApiClient } from '../api/apiClient';
 import { signIn, signOut } from '../store/authSlice';
+import { ConversationsRealtimeProvider } from './ConversationsProvider/RealtimeProvider';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,7 +32,9 @@ export function AppProviders({ children }: PropsWithChildren) {
       <SafeAreaProvider>
         <ReduxProvider store={store}>
           <QueryClientProvider client={queryClient}>
-            {children}
+            <ConversationsRealtimeProvider>
+              {children}
+            </ConversationsRealtimeProvider>
           </QueryClientProvider>
         </ReduxProvider>
       </SafeAreaProvider>

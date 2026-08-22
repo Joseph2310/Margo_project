@@ -22,3 +22,8 @@ const PRODUCTION_API_BASE_URL = 'https://api.example.com/api/v1';
 export const API_BASE_URL =
   configuredUrl ??
   (__DEV__ ? `http://${developmentHost}:8000/api/v1` : PRODUCTION_API_BASE_URL);
+
+export const CHAT_WEBSOCKET_URL = `${API_BASE_URL.replace(
+  /^http/,
+  'ws',
+)}/conversations/ws`;

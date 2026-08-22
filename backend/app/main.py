@@ -34,6 +34,8 @@ app = FastAPI(
     description=(
         "Backend contract for the Arabic Beneficiaries mobile application. "
         "Authenticated endpoints use an HTTP Bearer access token. "
+        "Real-time chat connects at /api/v1/conversations/ws and authenticates "
+        "with an authenticate event containing the same access token. "
         "Business-controlled values such as points, attendance QR values, "
         "submission status, and duplicate awards are calculated by the server."
     ),

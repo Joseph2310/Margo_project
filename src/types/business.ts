@@ -77,6 +77,8 @@ export interface KnowMeQuestion {
 
 export type SenderKind = 'beneficiary' | 'servant';
 export type MessageKind = 'text' | 'image' | 'voice';
+export type MessageDeliveryStatus = 'sent' | 'delivered' | 'read';
+export type ConversationKind = 'direct' | 'house';
 
 export interface ConversationMessage {
   id: string;
@@ -85,6 +87,10 @@ export interface ConversationMessage {
   kind: MessageKind;
   content: string;
   createdAt: string;
+  isMine: boolean;
+  status: MessageDeliveryStatus;
+  deliveredAt: string | null;
+  readAt: string | null;
 }
 
 export interface Conversation {
@@ -93,6 +99,7 @@ export interface Conversation {
   preview: string;
   messages: ConversationMessage[];
   status: 'active' | 'blocked' | 'deleted';
+  kind: ConversationKind;
 }
 
 export interface SuggestionPayload {
@@ -132,6 +139,10 @@ export interface SendMessagePayload {
 export interface SendMessageResponse {
   conversationId: string;
   message: ConversationMessage;
+}
+
+export interface MarkConversationReadResponse {
+  updatedCount: number;
 }
 
 export interface SuggestionResponse {

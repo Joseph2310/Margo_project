@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.exceptions import AppError
-from app.models import BeneficiaryProfile, Conversation, User, VerificationPurpose
+from app.models import BeneficiaryProfile, User, VerificationPurpose
 from app.schemas import (
     AuthSession,
     ChangePasswordRequest,
@@ -72,12 +72,6 @@ def register(
             talents=payload.talents,
         )
         db.add(profile)
-        db.add(
-            Conversation(
-                id=f"house-{user.id}",
-                beneficiary_user_id=user.id,
-            )
-        )
     else:
         user.password_hash = hash_secret(payload.password)
         profile = user.profile
@@ -91,19 +85,6 @@ def register(
         profile.class_saint_name = payload.class_saint_name
         profile.confession_father = payload.confession_father or None
         profile.talents = payload.talents
-        house_conversation = db.scalar(
-            select(Conversation).where(
-                Conversation.beneficiary_user_id == user.id,
-                Conversation.servant_id.is_(None),
-            )
-        )
-        if not house_conversation:
-            db.add(
-                Conversation(
-                    id=f"house-{user.id}",
-                    beneficiary_user_id=user.id,
-                )
-            )
     db.commit()
     return create_verification_challenge(
         db, email, VerificationPurpose.REGISTRATION

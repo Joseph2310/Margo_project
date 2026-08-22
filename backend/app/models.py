@@ -58,6 +58,17 @@ class ConversationStatus(str, enum.Enum):
     DELETED = "deleted"
 
 
+class ConversationKind(str, enum.Enum):
+    DIRECT = "direct"
+    HOUSE = "house"
+
+
+class MessageDeliveryStatus(str, enum.Enum):
+    SENT = "sent"
+    DELIVERED = "delivered"
+    READ = "read"
+
+
 class TimestampMixin:
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, nullable=False
@@ -339,8 +350,8 @@ class Conversation(TimestampMixin, Base):
     __tablename__ = "conversations"
 
     id: Mapped[str] = mapped_column(String(80), primary_key=True, default=new_id)
-    beneficiary_user_id: Mapped[str] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    beneficiary_user_id: Mapped[str | None] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True
     )
     servant_id: Mapped[str | None] = mapped_column(
         ForeignKey("servants.id"), nullable=True, index=True
@@ -348,6 +359,11 @@ class Conversation(TimestampMixin, Base):
     status: Mapped[ConversationStatus] = mapped_column(
         Enum(ConversationStatus, native_enum=False, length=24),
         default=ConversationStatus.ACTIVE,
+    )
+    kind: Mapped[ConversationKind] = mapped_column(
+        Enum(ConversationKind, native_enum=False, length=24),
+        default=ConversationKind.DIRECT,
+        nullable=False,
     )
 
     servant: Mapped[Servant | None] = relationship()
@@ -365,6 +381,9 @@ class ConversationMessage(Base):
     conversation_id: Mapped[str] = mapped_column(
         ForeignKey("conversations.id", ondelete="CASCADE"), index=True
     )
+    sender_user_id: Mapped[str | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     sender: Mapped[SenderKind] = mapped_column(
         Enum(SenderKind, native_enum=False, length=24)
     )
@@ -373,6 +392,17 @@ class ConversationMessage(Base):
         Enum(MessageKind, native_enum=False, length=24)
     )
     content: Mapped[str] = mapped_column(Text)
+    status: Mapped[MessageDeliveryStatus] = mapped_column(
+        Enum(MessageDeliveryStatus, native_enum=False, length=24),
+        default=MessageDeliveryStatus.SENT,
+        nullable=False,
+    )
+    delivered_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    read_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, nullable=False
     )

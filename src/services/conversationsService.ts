@@ -2,6 +2,7 @@ import { apiClient } from '../api/apiClient';
 import type { MessageResponse } from '../types/api';
 import type {
   Conversation,
+  MarkConversationReadResponse,
   SendMessagePayload,
   SendMessageResponse,
 } from '../types/business';
@@ -25,6 +26,15 @@ export const conversationsService = {
     const response = await apiClient.post<SendMessageResponse>(
       '/conversations/messages',
       payload,
+    );
+    return response.data;
+  },
+
+  async markConversationRead(
+    conversationId: string,
+  ): Promise<MarkConversationReadResponse> {
+    const response = await apiClient.post<MarkConversationReadResponse>(
+      `/conversations/${conversationId}/read`,
     );
     return response.data;
   },

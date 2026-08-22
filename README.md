@@ -21,7 +21,8 @@ The API is grouped under `/api/v1`:
 - `/home`, `/events`, `/readings`: home feed and content
 - `/questions`: categories, questions, proposed questions, and `Know Me`
 - `/retreat`: activities, submissions, reflection, and server-awarded points
-- `/conversations`: servant/group conversations, messages, blocking, and deletion
+- `/conversations`: private servant conversations, the shared beneficiary house
+  room, persisted messages, read receipts, blocking, and deletion
 - `/suggestions`: general suggestions and hymn ratings
 - `/notifications`: list, mark one read, or mark all read
 
@@ -37,6 +38,27 @@ The exact request/response models and error responses are the generated OpenAPI 
 - `src/store/`: persisted authentication/UI state only; server data remains in TanStack Query
 
 In development, the API host is derived from Metro's script URL. This lets an emulator or physical device use the computer running Metro and Docker without hard-coding an address. Production builds must replace `PRODUCTION_API_BASE_URL` in `src/config/environment.ts` or set `global.__API_BASE_URL__` before the bundle is evaluated.
+
+### Real-time chat contract
+
+The mobile app connects to `ws://<api-host>:8000/api/v1/conversations/ws` (or
+`wss://` in production), then immediately sends:
+
+```json
+{ "type": "authenticate", "accessToken": "<JWT access token>" }
+```
+
+The server emits `chat.connected`, `message.created`, `message.status`,
+`chat.error`, and `pong` events. Message creation remains an authenticated
+`POST /api/v1/conversations/messages`; this guarantees that authorization,
+validation, and persistence finish before an event is published. The app
+reconnects with bounded exponential backoff and refetches conversation history
+after reconnecting, so events missed while offline are recovered.
+
+The development service runs one Uvicorn worker, matching the in-process socket
+connection manager. A multi-worker or multi-instance deployment must put a
+shared pub/sub adapter (for example Redis) behind the connection manager before
+increasing the worker count.
 
 ## Run locally
 
@@ -68,6 +90,10 @@ npm ci
 npm start
 npm run android
 ```
+
+For a USB-connected Android phone, keep the configured development URL and run
+`adb reverse tcp:8082 tcp:8082` when Metro is on port 8082, plus
+`adb reverse tcp:8000 tcp:8000`. The WebSocket uses the same reversed API port.
 
 For iOS, run `bundle install` and `bundle exec pod install` from `ios/` on macOS before `npm run ios`.
 

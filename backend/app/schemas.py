@@ -6,7 +6,9 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 from app.models import (
+    ConversationKind,
     ConversationStatus,
+    MessageDeliveryStatus,
     MessageKind,
     ProposalStatus,
     SenderKind,
@@ -279,6 +281,10 @@ class ConversationMessageResponse(ApiModel):
     kind: MessageKind
     content: str
     created_at: datetime
+    is_mine: bool
+    status: MessageDeliveryStatus
+    delivered_at: datetime | None = None
+    read_at: datetime | None = None
 
 
 class ConversationResponse(ApiModel):
@@ -287,6 +293,7 @@ class ConversationResponse(ApiModel):
     preview: str
     messages: list[ConversationMessageResponse]
     status: ConversationStatus
+    kind: ConversationKind
 
 
 class SendMessageRequest(ApiModel):
@@ -299,6 +306,10 @@ class SendMessageRequest(ApiModel):
 class SendMessageResponse(ApiModel):
     conversation_id: str
     message: ConversationMessageResponse
+
+
+class MarkConversationReadResponse(ApiModel):
+    updated_count: int
 
 
 class SuggestionRequest(ApiModel):

@@ -7,6 +7,7 @@ from app.database import SessionLocal
 from app.models import (
     BeneficiaryProfile,
     Conversation,
+    ConversationKind,
     ConversationMessage,
     DailyReading,
     Event,
@@ -251,6 +252,7 @@ def seed_database() -> None:
                 id="miss-marina",
                 beneficiary_user_id=user.id,
                 servant_id=servant.id,
+                kind=ConversationKind.DIRECT,
             )
             db.add(direct)
             db.flush()
@@ -259,6 +261,7 @@ def seed_database() -> None:
                     ConversationMessage(
                         id="m1",
                         conversation_id=direct.id,
+                        sender_user_id=user.id,
                         sender=SenderKind.BENEFICIARY,
                         sender_name="جوي بركات",
                         kind=MessageKind.TEXT,
@@ -274,8 +277,18 @@ def seed_database() -> None:
                     ),
                 ]
             )
-        if not db.get(Conversation, "all"):
-            db.add(Conversation(id="all", beneficiary_user_id=user.id))
+        house = db.get(Conversation, "all")
+        if not house:
+            db.add(
+                Conversation(
+                    id="all",
+                    beneficiary_user_id=None,
+                    kind=ConversationKind.HOUSE,
+                )
+            )
+        else:
+            house.beneficiary_user_id = None
+            house.kind = ConversationKind.HOUSE
 
         db.commit()
     finally:
