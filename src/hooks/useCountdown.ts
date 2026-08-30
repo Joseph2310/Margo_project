@@ -9,5 +9,8 @@ export const useCountdown = (initialSeconds: number) => {
     return () => clearTimeout(timer);
   }, [seconds]);
 
-  return { seconds, restart: () => setSeconds(initialSeconds) };
+  return {
+    seconds,
+    restart: (nextSeconds = initialSeconds) => setSeconds(nextSeconds),
+  };
 };

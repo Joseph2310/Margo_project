@@ -14,7 +14,12 @@ export type RootStackParamList = {
   Login: undefined;
   BiometricLogin: { mode: 'fingerprint' | 'face' };
   Register: undefined;
-  Verification: { mode: VerificationMode; email: string; debugCode?: string };
+  Verification: {
+    mode: VerificationMode;
+    email: string;
+    expiresInSeconds: number;
+    debugCode?: string;
+  };
   ForgotPassword: undefined;
   ResetPassword: { email: string; resetToken: string };
   Main: NavigatorScreenParams<MainTabParamList> | undefined;

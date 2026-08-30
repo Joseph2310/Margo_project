@@ -24,11 +24,13 @@ export function ForgotPasswordScreen({ navigation }: Props) {
       setError(result.error.issues[0]?.message ?? t('validation.emailInvalid'));
       return;
     }
+    setError(undefined);
     try {
       const challenge = await forgotPassword.mutateAsync(result.data);
       navigation.navigate('Verification', {
         mode: 'passwordReset',
         email: result.data,
+        expiresInSeconds: challenge.expiresInSeconds,
         debugCode: challenge.verificationCode,
       });
     } catch (requestError) {

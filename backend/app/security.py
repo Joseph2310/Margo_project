@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -10,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.exceptions import AppError
+from app.localization import Language, localized
 from app.mailer import deliver_verification_code
 from app.models import RefreshSession, User, VerificationCode, VerificationPurpose
 from app.schemas import AuthSession, VerificationChallenge
@@ -124,7 +127,10 @@ def revoke_refresh_token(db: Session, token: str) -> None:
 
 
 def create_verification_challenge(
-    db: Session, email: str, purpose: VerificationPurpose
+    db: Session,
+    email: str,
+    purpose: VerificationPurpose,
+    language: Language = "ar",
 ) -> VerificationChallenge:
     email = normalize_email(email)
     db.execute(
@@ -138,7 +144,7 @@ def create_verification_challenge(
     )
     code = (
         settings.dev_verification_code
-        if settings.app_env != "production"
+        if settings.app_env != "production" and settings.expose_verification_code
         else f"{secrets.randbelow(1_000_000):06d}"
     )
     db.add(
@@ -150,16 +156,24 @@ def create_verification_challenge(
             + timedelta(seconds=settings.verification_code_ttl_seconds),
         )
     )
-    delivered = deliver_verification_code(email, purpose, code)
+    delivered = deliver_verification_code(email, purpose, code, language)
     db.commit()
     return VerificationChallenge(
         email=email,
         mode=purpose,
         expires_in_seconds=settings.verification_code_ttl_seconds,
         message=(
-            "A verification code has been sent."
+            localized(
+                "تم إرسال كود التحقق إلى بريدك الإلكتروني.",
+                "A verification code has been sent to your email.",
+                language,
+            )
             if delivered
-            else "A verification code has been generated for development."
+            else localized(
+                "تم إنشاء كود تحقق لبيئة التطوير.",
+                "A verification code has been generated for development.",
+                language,
+            )
         ),
         verification_code=code if settings.expose_verification_code else None,
     )
@@ -191,19 +205,38 @@ def consume_verification_code(
     db.flush()
 
 
-def create_password_reset_token(email: str) -> tuple[str, int]:
+def password_version(password_hash_value: str) -> str:
+    return hashlib.sha256(password_hash_value.encode("utf-8")).hexdigest()
+
+
+def create_password_reset_token(
+    email: str, password_hash_value: str
+) -> tuple[str, int]:
     expires_in = settings.password_reset_token_expire_minutes * 60
     token, _, _ = create_jwt(
         normalize_email(email),
         "password_reset",
         timedelta(seconds=expires_in),
+        extra={"passwordVersion": password_version(password_hash_value)},
     )
     return token, expires_in
 
 
-def validate_password_reset_token(token: str, email: str) -> None:
-    payload = decode_jwt(token, "password_reset")
-    if payload.get("sub") != normalize_email(email):
+def validate_password_reset_token(
+    token: str, email: str, password_hash_value: str
+) -> None:
+    try:
+        payload = decode_jwt(token, "password_reset")
+    except AppError as exc:
+        raise AppError(
+            401,
+            "invalid_reset_token",
+            "The reset token is invalid or expired.",
+        ) from exc
+    supplied_version = str(payload.get("passwordVersion", ""))
+    if payload.get("sub") != normalize_email(email) or not hmac.compare_digest(
+        supplied_version, password_version(password_hash_value)
+    ):
         raise AppError(401, "invalid_reset_token", "The reset token is invalid.")
 
 

@@ -21,7 +21,7 @@ import {
   useResendVerificationMutation,
   useVerifyMutation,
 } from '../../providers/AuthProvider/hooks';
-import { getApiErrorMessage } from '../../api/errors';
+import { getApiError, getApiErrorMessage } from '../../api/errors';
 import { useLocalization } from '../../localization';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Verification'>;
@@ -31,9 +31,13 @@ export function VerificationScreen({ route, navigation }: Props) {
   const { formatNumber, isRTL, t } = useLocalization();
   const verify = useVerifyMutation();
   const resend = useResendVerificationMutation();
-  const { seconds, restart } = useCountdown(60);
+  const { seconds: resendSeconds, restart: restartResend } = useCountdown(60);
+  const { seconds: expirySeconds, restart: restartExpiry } = useCountdown(
+    route.params.expiresInSeconds,
+  );
   const { mode, email } = route.params;
   const [serverError, setServerError] = useState<string>();
+  const [notice, setNotice] = useState<string>();
   const [debugCode, setDebugCode] = useState(route.params.debugCode);
   const schema = useMemo(() => createVerificationSchema(t), [t]);
   const {
@@ -45,15 +49,25 @@ export function VerificationScreen({ route, navigation }: Props) {
     defaultValues: { code: '' },
   });
   const activation = mode === 'activation';
+  const passwordReset = mode === 'passwordReset';
   const title = activation
     ? t('auth.activationTitle')
-    : t('auth.registrationCodeTitle');
+    : passwordReset
+      ? t('auth.passwordResetCodeTitle')
+      : t('auth.registrationCodeTitle');
   const description = activation
     ? t('auth.activationDescription')
-    : t('auth.registrationCodeDescription');
+    : passwordReset
+      ? t('auth.passwordResetCodeDescription', { email })
+      : t('auth.registrationCodeDescription');
 
   const submit = handleSubmit(async values => {
     setServerError(undefined);
+    setNotice(undefined);
+    if (expirySeconds <= 0) {
+      setServerError(t('auth.codeExpired'));
+      return;
+    }
     try {
       const result = await verify.mutateAsync({
         email,
@@ -73,16 +87,23 @@ export function VerificationScreen({ route, navigation }: Props) {
       if (!result.session) throw new Error(t('auth.sessionStartFailed'));
       dispatch(signIn(result.session));
     } catch (error) {
+      if (getApiError(error).code === 'verification_expired') {
+        restartExpiry(0);
+        restartResend(0);
+      }
       setServerError(getApiErrorMessage(error, t));
     }
   });
 
   const resendCode = async () => {
     setServerError(undefined);
+    setNotice(undefined);
     try {
       const challenge = await resend.mutateAsync({ email, mode });
       setDebugCode(challenge.verificationCode);
-      restart();
+      restartResend();
+      restartExpiry(challenge.expiresInSeconds);
+      setNotice(t('auth.codeResent'));
     } catch (error) {
       setServerError(getApiErrorMessage(error, t));
     }
@@ -111,14 +132,29 @@ export function VerificationScreen({ route, navigation }: Props) {
           <OtpInput
             value={field.value}
             error={errors.code?.message}
-            onChange={field.onChange}
+            onChange={value => {
+              field.onChange(value);
+              setServerError(undefined);
+              setNotice(undefined);
+            }}
           />
         )}
       />
       <View className="mb-16 items-center">
-        {seconds > 0 ? (
+        <AppText
+          align="center"
+          className={`text-small ${expirySeconds > 0 ? 'text-muted' : 'text-danger'}`}>
+          {expirySeconds > 0
+            ? t('auth.codeExpiresIn', {
+                seconds: formatNumber(expirySeconds),
+              })
+            : t('auth.codeExpired')}
+        </AppText>
+        {resendSeconds > 0 ? (
           <AppText align="center" className="text-small text-muted">
-            {t('auth.codeCountdown', { seconds: formatNumber(seconds) })}
+            {t('auth.codeCountdown', {
+              seconds: formatNumber(resendSeconds),
+            })}
           </AppText>
         ) : (
           <View className={`gap-1 ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
@@ -132,8 +168,14 @@ export function VerificationScreen({ route, navigation }: Props) {
           {serverError}
         </AppText>
       ) : null}
+      {notice ? (
+        <AppText align="center" className="mb-3 text-primary">
+          {notice}
+        </AppText>
+      ) : null}
       <PrimaryButton
         label={t('common.continue')}
+        disabled={expirySeconds <= 0}
         loading={isSubmitting || verify.isPending || resend.isPending}
         onPress={submit}
       />

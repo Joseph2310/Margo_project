@@ -12,7 +12,7 @@ Arabic RTL React Native application with a FastAPI/PostgreSQL backend. The API a
 - Argon2 password hashing, expiring verification codes, reset tokens, and attempt limits
 - Server-owned points, attendance QR values, submission status, and duplicate-award rules
 - Configurable SMTP delivery for registration and password-reset codes
-- Docker Compose services for the database, API, backend integration tests, and frontend checks
+- Docker Compose services for Mailpit, the database, API, backend integration tests, and frontend checks
 
 The API is grouped under `/api/v1`:
 
@@ -76,12 +76,17 @@ Development URLs:
 - ReDoc: `http://localhost:8000/redoc`
 - OpenAPI JSON: `http://localhost:8000/openapi.json`
 - Versioned OpenAPI snapshot: `backend/openapi.json`
+- Development email inbox: `http://localhost:8025`
 
 Seeded development account:
 
 - Email: `joy.barakat@hotmail.com`
 - Password: `Password1`
-- Verification code: `123456`
+
+Registration and password-recovery OTPs are delivered through SMTP to the
+Mailpit development inbox. Open `http://localhost:8025`, select the message
+addressed to the entered email, and copy its six-digit code. Mailpit captures
+development mail and does not forward it to public email providers.
 
 Then run the mobile app:
 
@@ -120,7 +125,10 @@ All backend settings are environment variables; `.env.example` is the deployment
 - Set a long random `JWT_SECRET_KEY` and production `DATABASE_URL`.
 - Set `APP_ENV=production`, `AUTO_SEED=false`, and `EXPOSE_VERIFICATION_CODE=false`.
 - Configure `CORS_ORIGINS` as a comma-separated allowlist.
-- Configure `SMTP_HOST`, port, credentials, sender, and TLS/SSL options. If codes are hidden and SMTP is absent, verification returns a documented `503` instead of silently losing the code.
+- Replace the development Mailpit values with the hosted email provider's
+  `SMTP_HOST`, port, credentials, verified sender, and TLS/SSL options. With
+  `EXPOSE_VERIFICATION_CODE=false`, missing or failed SMTP delivery returns a
+  documented `503` instead of silently continuing without an email.
 - Set the optional `WHATSAPP_GROUP_URL`.
 - Run `alembic upgrade head` before starting Uvicorn/Gunicorn workers.
 

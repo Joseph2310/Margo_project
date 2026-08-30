@@ -2,9 +2,11 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.exceptions import AppError
+from app.localization import Language, get_language, localized
 from app.models import BeneficiaryProfile, User, VerificationPurpose
 from app.schemas import (
     AuthSession,
@@ -46,7 +48,9 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
     summary="Register a beneficiary and send a verification code",
 )
 def register(
-    payload: RegistrationRequest, db: Session = Depends(get_db)
+    payload: RegistrationRequest,
+    language: Language = Depends(get_language),
+    db: Session = Depends(get_db),
 ) -> VerificationChallenge:
     email = normalize_email(str(payload.email))
     user = db.scalar(select(User).where(User.email == email))
@@ -87,7 +91,7 @@ def register(
         profile.talents = payload.talents
     db.commit()
     return create_verification_challenge(
-        db, email, VerificationPurpose.REGISTRATION
+        db, email, VerificationPurpose.REGISTRATION, language
     )
 
 
@@ -105,7 +109,9 @@ def verify_code(
         raise AppError(400, "verification_invalid", "The verification code is invalid.")
     consume_verification_code(db, email, payload.mode, payload.code)
     if payload.mode == VerificationPurpose.PASSWORD_RESET:
-        reset_token, expires_in = create_password_reset_token(email)
+        reset_token, expires_in = create_password_reset_token(
+            email, user.password_hash
+        )
         db.commit()
         return VerificationResult(
             mode=payload.mode,
@@ -124,13 +130,15 @@ def verify_code(
     summary="Resend a verification code",
 )
 def resend_code(
-    payload: ResendVerificationRequest, db: Session = Depends(get_db)
+    payload: ResendVerificationRequest,
+    language: Language = Depends(get_language),
+    db: Session = Depends(get_db),
 ) -> VerificationChallenge:
     email = normalize_email(str(payload.email))
     user = db.scalar(select(User).where(User.email == email))
     if not user:
         raise AppError(404, "account_not_found", "The account was not found.")
-    return create_verification_challenge(db, email, payload.mode)
+    return create_verification_challenge(db, email, payload.mode, language)
 
 
 @router.post("/login", response_model=AuthSession, summary="Log in with email and password")
@@ -155,19 +163,25 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> AuthSession:
     summary="Request a password-reset verification code",
 )
 def forgot_password(
-    payload: ForgotPasswordRequest, db: Session = Depends(get_db)
+    payload: ForgotPasswordRequest,
+    language: Language = Depends(get_language),
+    db: Session = Depends(get_db),
 ) -> VerificationChallenge:
     email = normalize_email(str(payload.email))
     user = db.scalar(select(User).where(User.email == email, User.is_active.is_(True)))
     if user:
         return create_verification_challenge(
-            db, email, VerificationPurpose.PASSWORD_RESET
+            db, email, VerificationPurpose.PASSWORD_RESET, language
         )
     return VerificationChallenge(
         email=email,
         mode=VerificationPurpose.PASSWORD_RESET,
-        expires_in_seconds=600,
-        message="If the account exists, a verification code has been generated.",
+        expires_in_seconds=settings.verification_code_ttl_seconds,
+        message=localized(
+            "إذا كان الحساب موجوداً، فسيتم إرسال كود تحقق إلى البريد الإلكتروني.",
+            "If the account exists, a verification code will be sent by email.",
+            language,
+        ),
     )
 
 
@@ -177,17 +191,25 @@ def forgot_password(
     summary="Set a new password using a verified reset token",
 )
 def reset_password(
-    payload: ResetPasswordRequest, db: Session = Depends(get_db)
+    payload: ResetPasswordRequest,
+    language: Language = Depends(get_language),
+    db: Session = Depends(get_db),
 ) -> MessageResponse:
     email = normalize_email(str(payload.email))
-    validate_password_reset_token(payload.reset_token, email)
     user = db.scalar(select(User).where(User.email == email))
     if not user:
         raise AppError(404, "account_not_found", "The account was not found.")
+    validate_password_reset_token(payload.reset_token, email, user.password_hash)
     user.password_hash = hash_secret(payload.password)
     revoke_all_user_sessions(db, user.id)
     db.commit()
-    return MessageResponse(message="Password updated successfully.")
+    return MessageResponse(
+        message=localized(
+            "تم تحديث كلمة المرور بنجاح.",
+            "Password updated successfully.",
+            language,
+        )
+    )
 
 
 @router.post(

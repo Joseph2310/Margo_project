@@ -8,6 +8,8 @@ from typing import Any
 import httpx
 import websockets
 
+from tests.helpers import verification_code_from_email
+
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://api:8000")
 WEBSOCKET_URL = (
@@ -41,11 +43,12 @@ def register_verified_user(client: httpx.Client, label: str) -> dict[str, Any]:
         },
     )
     assert registration.status_code == 201, registration.text
+    verification_code = verification_code_from_email(registration.json(), email)
     verification = client.post(
         "/api/v1/auth/verification/verify",
         json={
             "email": email,
-            "code": registration.json()["verificationCode"],
+            "code": verification_code,
             "mode": "registration",
         },
     )

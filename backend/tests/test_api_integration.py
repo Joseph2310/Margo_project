@@ -3,6 +3,8 @@ import uuid
 
 import httpx
 
+from tests.helpers import verification_code_from_email
+
 
 API_BASE_URL = os.getenv("API_BASE_URL", "http://api:8000")
 
@@ -42,7 +44,9 @@ def test_complete_beneficiary_flow() -> None:
             },
         )
         assert registration.status_code == 201, registration.text
-        verification_code = registration.json()["verificationCode"]
+        verification_code = verification_code_from_email(
+            registration.json(), email
+        )
 
         verification = client.post(
             "/api/v1/auth/verification/verify",
@@ -185,6 +189,69 @@ def test_complete_beneficiary_flow() -> None:
             json={"email": email, "password": "Password2"},
         )
         assert relogin.status_code == 200
+
+        forgot = client.post(
+            "/api/v1/auth/password/forgot",
+            headers={"Accept-Language": "en"},
+            json={"email": email},
+        )
+        assert forgot.status_code == 200, forgot.text
+        reset_code = verification_code_from_email(forgot.json(), email)
+
+        invalid_code = client.post(
+            "/api/v1/auth/verification/verify",
+            json={
+                "email": email,
+                "code": "000000" if reset_code != "000000" else "999999",
+                "mode": "passwordReset",
+            },
+        )
+        assert invalid_code.status_code == 400
+        assert invalid_code.json()["code"] == "verification_invalid"
+
+        verified_reset = client.post(
+            "/api/v1/auth/verification/verify",
+            json={
+                "email": email,
+                "code": reset_code,
+                "mode": "passwordReset",
+            },
+        )
+        assert verified_reset.status_code == 200, verified_reset.text
+        reset_token = verified_reset.json()["passwordResetToken"]
+
+        reset = client.post(
+            "/api/v1/auth/password/reset",
+            headers={"Accept-Language": "en"},
+            json={
+                "email": email,
+                "resetToken": reset_token,
+                "password": "Password3",
+                "confirmPassword": "Password3",
+            },
+        )
+        assert reset.status_code == 200, reset.text
+        assert reset.json()["message"] == "Password updated successfully."
+
+        reused_token = client.post(
+            "/api/v1/auth/password/reset",
+            json={
+                "email": email,
+                "resetToken": reset_token,
+                "password": "Password4",
+                "confirmPassword": "Password4",
+            },
+        )
+        assert reused_token.status_code == 401
+        assert reused_token.json()["code"] == "invalid_reset_token"
+        assert client.post(
+            "/api/v1/auth/login",
+            json={"email": email, "password": "Password2"},
+        ).status_code == 401
+        assert client.post(
+            "/api/v1/auth/login",
+            json={"email": email, "password": "Password3"},
+        ).status_code == 200
 
         assert client.get("/openapi.json").status_code == 200
         assert client.get("/docs").status_code == 200

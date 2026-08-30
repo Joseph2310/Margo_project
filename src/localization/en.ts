@@ -63,10 +63,20 @@ export const en = {
     'Enter the account activation code sent to you.',
   'auth.registrationCodeDescription':
     'Enter the verification code sent to your email address.',
+  'auth.passwordResetCodeTitle': 'Verify your email',
+  'auth.passwordResetCodeDescription':
+    'If an account exists for {{email}}, enter the six-digit code sent to it before setting a new password.',
   'auth.debugCode': 'Test environment code: {{code}}',
-  'auth.codeCountdown': 'The code will arrive within {{seconds}} seconds',
+  'auth.codeCountdown': 'You can request another code in {{seconds}} seconds',
+  'auth.codeExpiresIn': 'The code expires in {{seconds}} seconds',
+  'auth.codeExpired': 'This code has expired. Request a new code.',
+  'auth.codeResent': 'A new code was sent to your email.',
   'auth.noCode': "Didn't receive a code?",
   'auth.resendCode': 'Resend',
+  'auth.resetPasswordAction': 'Reset password',
+  'auth.passwordResetSuccessTitle': 'Password updated',
+  'auth.passwordResetSuccessMessage':
+    'Your password was reset successfully. You can now sign in with the new password.',
   'auth.missingResetToken': 'A password reset token was not issued.',
   'auth.sessionStartFailed': 'Unable to start the user session.',
   'auth.otpAccessibility': 'Six-digit verification code',

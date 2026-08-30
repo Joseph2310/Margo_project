@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Controller, useForm, useWatch } from 'react-hook-form';
+import { Alert } from 'react-native';
 import { AppHeader } from '../../components/AppHeader';
 import { AppText } from '../../components/AppText';
 import { PrimaryButton } from '../../components/PrimaryButton';
@@ -41,7 +42,17 @@ export function ResetPasswordScreen({ navigation, route }: Props) {
         email: route.params.email,
         resetToken: route.params.resetToken,
       });
-      navigation.replace('Login');
+      Alert.alert(
+        t('auth.passwordResetSuccessTitle'),
+        t('auth.passwordResetSuccessMessage'),
+        [
+          {
+            text: t('auth.signIn'),
+            onPress: () => navigation.replace('Login'),
+          },
+        ],
+        { cancelable: false },
+      );
     } catch (error) {
       setServerError(getApiErrorMessage(error, t));
     }
@@ -88,7 +99,7 @@ export function ResetPasswordScreen({ navigation, route }: Props) {
       ) : null}
       <PrimaryButton
         className="mt-10"
-        label={t('common.continue')}
+        label={t('auth.resetPasswordAction')}
         loading={resetPassword.isPending}
         onPress={submit}
       />

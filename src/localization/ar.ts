@@ -64,10 +64,20 @@ export const ar = {
   'auth.activationDescription': 'أدخل كود تفعيل الحساب المرسل لك.',
   'auth.registrationCodeDescription':
     'أدخل كود التسجيل المرسل إلى بريدك الإلكتروني.',
+  'auth.passwordResetCodeTitle': 'تأكيد البريد الإلكتروني',
+  'auth.passwordResetCodeDescription':
+    'إذا كان هناك حساب مرتبط بـ {{email}}، فأدخل الكود المكون من 6 أرقام المرسل إليه قبل تعيين كلمة مرور جديدة.',
   'auth.debugCode': 'كود بيئة الاختبار: {{code}}',
-  'auth.codeCountdown': 'سيصلك الكود خلال {{seconds}} ثانية',
+  'auth.codeCountdown': 'يمكنك طلب كود جديد خلال {{seconds}} ثانية',
+  'auth.codeExpiresIn': 'تنتهي صلاحية الكود خلال {{seconds}} ثانية',
+  'auth.codeExpired': 'انتهت صلاحية هذا الكود. اطلب كوداً جديداً.',
+  'auth.codeResent': 'تم إرسال كود جديد إلى بريدك الإلكتروني.',
   'auth.noCode': 'لم تستقبل كود؟',
   'auth.resendCode': 'إعادة الإرسال',
+  'auth.resetPasswordAction': 'إعادة تعيين كلمة المرور',
+  'auth.passwordResetSuccessTitle': 'تم تحديث كلمة المرور',
+  'auth.passwordResetSuccessMessage':
+    'تمت إعادة تعيين كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.',
   'auth.missingResetToken': 'لم يتم إصدار رمز إعادة تعيين كلمة المرور.',
   'auth.sessionStartFailed': 'تعذر بدء جلسة المستخدم.',
   'auth.otpAccessibility': 'كود مكون من 6 أرقام',

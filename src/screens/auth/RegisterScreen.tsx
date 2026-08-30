@@ -107,6 +107,7 @@ export function RegisterScreen({ navigation }: Props) {
       navigation.navigate('Verification', {
         mode: 'registration',
         email: values.email,
+        expiresInSeconds: challenge.expiresInSeconds,
         debugCode: challenge.verificationCode,
       });
     } catch (error) {
