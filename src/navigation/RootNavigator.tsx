@@ -21,18 +21,23 @@ import { SuggestionsScreen } from '../screens/suggestions/SuggestionsScreen';
 import type { RootStackParamList } from '../types/navigation';
 import { MainTabs } from './MainTabs';
 import { useAppSelector } from '../store/hooks';
+import { useLocalization } from '../localization';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
+  const { direction, isRTL } = useLocalization();
   const { hasCompletedSplash, isAuthenticated } = useAppSelector(
     state => state.auth,
   );
   return (
-    <NavigationContainer direction="rtl">
+    <NavigationContainer direction={direction}>
       <Stack.Navigator
         initialRouteName="Splash"
-        screenOptions={{ headerShown: false, animation: 'slide_from_left' }}>
+        screenOptions={{
+          headerShown: false,
+          animation: isRTL ? 'slide_from_left' : 'slide_from_right',
+        }}>
         {!hasCompletedSplash ? (
           <Stack.Screen
             name="Splash"

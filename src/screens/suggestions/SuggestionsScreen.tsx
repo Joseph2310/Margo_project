@@ -10,14 +10,24 @@ import { colors } from '../../theme/tokens';
 import { useSuggestionMutation } from '../../providers/SuggestionsProvider/hooks';
 import { Alert } from 'react-native';
 import { getApiErrorMessage } from '../../api/errors';
+import {
+  directionStyles,
+  useLocalization,
+  type TranslationKey,
+} from '../../localization';
 
 const fields = [
-  { key: 'general', label: 'اقتراحاتك لمدارس الاحد' },
-  { key: 'lessons', label: 'اقتراحاتك لدروس مدارس الاحد' },
-  { key: 'hymns', label: 'اقتراحاتك لترانيم مدارس الاحد' },
+  { key: 'general', labelKey: 'suggestions.general' },
+  { key: 'lessons', labelKey: 'suggestions.lessons' },
+  { key: 'hymns', labelKey: 'suggestions.hymns' },
 ] as const;
 
+type SuggestionField = (typeof fields)[number] & {
+  labelKey: TranslationKey;
+};
+
 export function SuggestionsScreen() {
+  const { isRTL, t } = useLocalization();
   const [values, setValues] = useState<
     Record<(typeof fields)[number]['key'], string>
   >({ general: '', lessons: '', hymns: '' });
@@ -39,20 +49,22 @@ export function SuggestionsScreen() {
       setValues({ general: '', lessons: '', hymns: '' });
       setRating(0);
     } catch (error) {
-      Alert.alert('تعذر إرسال المقترحات', getApiErrorMessage(error));
+      Alert.alert(t('suggestions.sendError'), getApiErrorMessage(error, t));
     }
   };
   return (
     <Screen>
-      <AppHeader title="الاقتراحات" />
-      {fields.map(item => (
+      <AppHeader title={t('more.suggestions')} />
+      {(fields as readonly SuggestionField[]).map(item => (
         <View key={item.key} className="mb-5">
-          <AppText className="text-label mb-2">{item.label}</AppText>
+          <AppText className="text-label mb-2">{t(item.labelKey)}</AppText>
           <TextInput
             multiline
-            className="h-28 rounded-md bg-input p-3 text-right text-ink"
+            className="h-28 rounded-md bg-input p-3 text-ink"
             selectionColor={colors.primary}
             textAlignVertical="top"
+            textAlign={isRTL ? 'right' : 'left'}
+            style={isRTL ? directionStyles.rtlText : directionStyles.ltrText}
             value={values[item.key]}
             onChangeText={value => {
               setValues(current => ({ ...current, [item.key]: value }));
@@ -61,19 +73,20 @@ export function SuggestionsScreen() {
           />
         </View>
       ))}
-      <AppText className="text-label">تقييم ترانيم مدارس الاحد</AppText>
+      <AppText className="text-label">{t('suggestions.hymnRating')}</AppText>
       <RatingControl value={rating} onChange={setRating} />
-      <View className="my-5 flex-row-reverse items-center justify-between">
-        <AppText className="text-body">ارسال المقترحات :</AppText>
+      <View
+        className={`my-5 items-center justify-between ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
+        <AppText className="text-body">{t('suggestions.sendAs')}</AppText>
         <IdentityToggle anonymous={anonymous} onChange={setAnonymous} />
       </View>
       {sent ? (
         <AppText align="center" className="mb-3 text-primary">
-          تم إرسال المقترحات
+          {t('suggestions.sent')}
         </AppText>
       ) : null}
       <PrimaryButton
-        label="إرسال"
+        label={t('common.send')}
         disabled={!canSend}
         loading={submitSuggestion.isPending}
         onPress={submit}

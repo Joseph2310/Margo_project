@@ -13,8 +13,10 @@ import {
 import { colors } from '../../theme/tokens';
 import { Alert } from 'react-native';
 import { getApiErrorMessage } from '../../api/errors';
+import { directionStyles, useLocalization } from '../../localization';
 
 export function RetreatScreen() {
+  const { isRTL, t } = useLocalization();
   const activities = useActivitiesQuery();
   const submitRetreat = useRetreatSubmissionMutation();
   const [checkedIds, setCheckedIds] = useState<string[]>([]);
@@ -38,13 +40,13 @@ export function RetreatScreen() {
       setCheckedIds([]);
       setReflection('');
     } catch (error) {
-      Alert.alert('تعذر الإرسال', getApiErrorMessage(error));
+      Alert.alert(t('retreat.sendError'), getApiErrorMessage(error, t));
     }
   };
 
   return (
     <Screen bottomInset={false}>
-      <AppHeader title="الخلوة" />
+      <AppHeader title={t('tabs.retreat')} />
       <QueryState
         loading={activities.isLoading}
         error={activities.isError}
@@ -58,12 +60,16 @@ export function RetreatScreen() {
           onToggle={() => toggle(activity.id)}
         />
       ))}
-      <AppText className="text-label mb-2 mt-4">شاركينا بتأملك</AppText>
+      <AppText className="text-label mb-2 mt-4">
+        {t('retreat.shareReflection')}
+      </AppText>
       <TextInput
         multiline
-        className="h-32 rounded-md bg-input p-3 text-right text-ink"
+        className="h-32 rounded-md bg-input p-3 text-ink"
         selectionColor={colors.primary}
         textAlignVertical="top"
+        textAlign={isRTL ? 'right' : 'left'}
+        style={isRTL ? directionStyles.rtlText : directionStyles.ltrText}
         value={reflection}
         onChangeText={value => {
           setReflection(value);
@@ -72,12 +78,12 @@ export function RetreatScreen() {
       />
       {sent ? (
         <AppText align="center" className="mt-3 text-primary">
-          تم الإرسال
+          {t('retreat.sent')}
         </AppText>
       ) : null}
       <PrimaryButton
         className="mt-8"
-        label="إرسال"
+        label={t('common.send')}
         disabled={!reflection.trim() && checkedIds.length === 0}
         loading={submitRetreat.isPending}
         onPress={submit}

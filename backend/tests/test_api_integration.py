@@ -65,6 +65,35 @@ def test_complete_beneficiary_flow() -> None:
         assert home.status_code == 200
         assert home.json()["questionCategories"]
 
+        english_headers = {**headers, "Accept-Language": "en"}
+        english_home = client.get("/api/v1/home", headers=english_headers)
+        assert english_home.status_code == 200
+        english_categories = english_home.json()["questionCategories"]
+        assert next(
+            category for category in english_categories if category["id"] == "prayer"
+        )["title"] == "Prayer"
+        assert english_home.json()["upcomingEvents"][0]["name"] == "Sports Day"
+
+        english_activities = client.get(
+            "/api/v1/retreat/activities", headers=english_headers
+        )
+        assert english_activities.status_code == 200
+        assert english_activities.json()[0]["title"] == "Daily reading"
+
+        english_questions = client.get(
+            "/api/v1/questions",
+            headers=english_headers,
+            params={"categoryId": "prayer"},
+        )
+        assert english_questions.status_code == 200
+        assert english_questions.json()[0]["question"] == "Why do we pray?"
+
+        english_house = client.get(
+            "/api/v1/conversations/all", headers=english_headers
+        )
+        assert english_house.status_code == 200
+        assert english_house.json()["servantName"] == "Sunday School servants"
+
         retreat = client.post(
             "/api/v1/retreat/submissions",
             headers=headers,
@@ -136,6 +165,7 @@ def test_complete_beneficiary_flow() -> None:
         )
         assert sent_message.status_code == 201, sent_message.text
         assert sent_message.json()["message"]["senderName"] == "مجهول الهوية"
+        assert sent_message.json()["message"]["isAnonymous"] is True
 
         updated_profile = client.get("/api/v1/profile", headers=headers).json()
         assert updated_profile["points"] == 150

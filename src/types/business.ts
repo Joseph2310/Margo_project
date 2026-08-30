@@ -84,6 +84,7 @@ export interface ConversationMessage {
   id: string;
   sender: SenderKind;
   senderName: string;
+  isAnonymous: boolean;
   kind: MessageKind;
   content: string;
   createdAt: string;

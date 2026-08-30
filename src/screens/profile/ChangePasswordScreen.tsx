@@ -5,26 +5,29 @@ import { PrimaryButton } from '../../components/PrimaryButton';
 import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/forms/TextField';
 import {
-  changePasswordSchema,
+  createChangePasswordSchema,
   type ChangePasswordForm,
 } from '../../utils/validation';
 import { useChangePasswordMutation } from '../../providers/AuthProvider/hooks';
 import { useAppDispatch } from '../../store/hooks';
 import { signOut } from '../../store/authSlice';
 import { getApiErrorMessage } from '../../api/errors';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AppText } from '../../components/AppText';
+import { useLocalization } from '../../localization';
 
 export function ChangePasswordScreen() {
+  const { t } = useLocalization();
   const dispatch = useAppDispatch();
   const changePassword = useChangePasswordMutation();
   const [serverError, setServerError] = useState<string>();
+  const schema = useMemo(() => createChangePasswordSchema(t), [t]);
   const {
     control,
     handleSubmit,
     formState: { errors },
   } = useForm<ChangePasswordForm>({
-    resolver: zodResolver(changePasswordSchema),
+    resolver: zodResolver(schema),
     defaultValues: { currentPassword: '', password: '', confirmPassword: '' },
   });
   const submit = handleSubmit(async values => {
@@ -33,18 +36,18 @@ export function ChangePasswordScreen() {
       await changePassword.mutateAsync(values);
       dispatch(signOut());
     } catch (error) {
-      setServerError(getApiErrorMessage(error));
+      setServerError(getApiErrorMessage(error, t));
     }
   });
   return (
     <Screen scroll={false}>
-      <AppHeader title="تغيير كلمة المرور" />
+      <AppHeader title={t('auth.changePassword')} />
       <Controller
         control={control}
         name="currentPassword"
         render={({ field }) => (
           <TextField
-            label="كلمة المرور الحالية"
+            label={t('auth.currentPassword')}
             icon="lock-closed"
             secureTextEntry
             value={field.value}
@@ -58,7 +61,7 @@ export function ChangePasswordScreen() {
         name="password"
         render={({ field }) => (
           <TextField
-            label="كلمة المرور الجديدة"
+            label={t('auth.newPassword')}
             icon="lock-closed"
             secureTextEntry
             value={field.value}
@@ -72,7 +75,7 @@ export function ChangePasswordScreen() {
         name="confirmPassword"
         render={({ field }) => (
           <TextField
-            label="تأكيد كلمة المرور الجديدة"
+            label={t('auth.confirmNewPassword')}
             icon="lock-closed"
             secureTextEntry
             value={field.value}
@@ -88,7 +91,7 @@ export function ChangePasswordScreen() {
       ) : null}
       <PrimaryButton
         className="mt-8"
-        label="حفظ"
+        label={t('common.save')}
         loading={changePassword.isPending}
         onPress={submit}
       />

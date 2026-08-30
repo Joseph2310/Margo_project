@@ -17,8 +17,10 @@ import {
 } from '../../providers/ProfileProvider/hooks';
 import { QueryState } from '../../components/feedback/QueryState';
 import { getApiErrorMessage } from '../../api/errors';
+import { useLocalization } from '../../localization';
 
 export function ProfileScreen() {
+  const { formatNumber, isRTL, language, t } = useLocalization();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const profileQuery = useProfileQuery();
@@ -30,33 +32,37 @@ export function ProfileScreen() {
     icon: IoniconsIconName;
   }> = profile
     ? [
-        { label: 'الاسم', value: profile.name, icon: 'person' },
-        { label: 'تاريخ الميلاد', value: profile.birthDate, icon: 'calendar' },
-        { label: 'المرحلة', value: profile.stage, icon: 'people' },
-        { label: 'محل الاقامة', value: profile.address, icon: 'home' },
-        { label: 'رقم الهاتف', value: profile.phone, icon: 'call' },
+        { label: t('fields.name'), value: profile.name, icon: 'person' },
         {
-          label: 'رقم الواتس اب',
+          label: t('fields.birthDate'),
+          value: profile.birthDate,
+          icon: 'calendar',
+        },
+        { label: t('fields.stage'), value: profile.stage, icon: 'people' },
+        { label: t('fields.residence'), value: profile.address, icon: 'home' },
+        { label: t('fields.phone'), value: profile.phone, icon: 'call' },
+        {
+          label: t('fields.whatsapp'),
           value: profile.whatsapp,
           icon: 'logo-whatsapp',
         },
-        { label: 'المدرسة', value: profile.school, icon: 'school' },
+        { label: t('fields.school'), value: profile.school, icon: 'school' },
         {
-          label: 'اسم قديس الفصل',
+          label: t('fields.classSaintName'),
           value: profile.classSaintName,
           icon: 'person-circle',
         },
         {
-          label: 'اب الاعتراف',
+          label: t('fields.confessionFather'),
           value: profile.confessionFather ?? '',
           icon: 'body',
         },
         {
-          label: 'المواهب',
-          value: profile.talents.join('، '),
+          label: t('fields.talents'),
+          value: profile.talents.join(language === 'ar' ? '، ' : ', '),
           icon: 'calendar',
         },
-        { label: 'البريد الالكتروني', value: profile.email, icon: 'mail' },
+        { label: t('fields.email'), value: profile.email, icon: 'mail' },
       ]
     : [];
   const openWhatsAppGroup = async () => {
@@ -64,7 +70,10 @@ export function ProfileScreen() {
       const url = await whatsappGroup.mutateAsync();
       await Linking.openURL(url);
     } catch (error) {
-      Alert.alert('رابط جروب الواتس اب', getApiErrorMessage(error));
+      Alert.alert(
+        t('profile.whatsappGroupError'),
+        getApiErrorMessage(error, t),
+      );
     }
   };
   return (
@@ -76,25 +85,33 @@ export function ProfileScreen() {
       />
       {profile ? (
         <>
-          <View className="mb-5 mt-2 flex-row items-center justify-between">
+          <View
+            className={`mb-5 mt-2 items-center justify-between ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('common.back')}
               className="h-12 w-14 items-center justify-center rounded-lg bg-primary-soft"
               onPress={() => navigation.goBack()}>
-              <Ionicons name="chevron-back" size={20} color={colors.primary} />
+              <Ionicons
+                name={isRTL ? 'chevron-forward' : 'chevron-back'}
+                size={20}
+                color={colors.primary}
+              />
             </Pressable>
             <AppText align="center" className="text-title">
-              البروفايل
+              {t('profile.title')}
             </AppText>
             <Pressable onPress={() => navigation.navigate('EditProfile')}>
               <AppText className="text-small text-primary">
-                تعديل البيانات
+                {t('profile.edit')}
               </AppText>
             </Pressable>
           </View>
           <View className="mb-5 items-center">
             <View className="h-20 w-20 items-center justify-center rounded-full bg-rose">
               <Ionicons name="person" size={42} color={colors.primary} />
-              <View className="absolute bottom-0 left-0 h-6 w-6 items-center justify-center rounded-full bg-primary">
+              <View
+                className={`absolute bottom-0 h-6 w-6 items-center justify-center rounded-full bg-primary ${isRTL ? 'right-0' : 'left-0'}`}>
                 <Ionicons name="camera" size={12} color={colors.surface} />
               </View>
             </View>
@@ -103,17 +120,18 @@ export function ProfileScreen() {
             <ProfileField key={field.label} {...field} />
           ))}
           <Pressable
-            className="my-5 self-start"
+            className={`my-5 ${isRTL ? 'self-end' : 'self-start'}`}
             onPress={() => navigation.navigate('ChangePassword')}>
             <AppText className="text-small text-primary underline">
-              تغيير كلمة السر
+              {t('profile.changePassword')}
             </AppText>
           </Pressable>
-          <View className="mb-6 flex-row-reverse items-center justify-center gap-10">
+          <View
+            className={`mb-6 items-center justify-center gap-10 ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
             <View>
-              <AppText className="text-body">النقاط 🪙</AppText>
+              <AppText className="text-body">{t('profile.points')}</AppText>
               <AppText className="text-label mt-2">
-                {profile.points} نقطة
+                {t('common.points', { count: formatNumber(profile.points) })}
               </AppText>
             </View>
             <View className="h-16 w-px bg-ink" />
@@ -124,7 +142,7 @@ export function ProfileScreen() {
             />
           </View>
           <PrimaryButton
-            label="🔗 اربط جروب الواتس اب"
+            label={t('profile.whatsappGroup')}
             loading={whatsappGroup.isPending}
             onPress={openWhatsAppGroup}
           />

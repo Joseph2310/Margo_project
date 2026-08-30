@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 import { colors } from '../../theme/tokens';
 import { AppText } from '../AppText';
+import { useLocalization } from '../../localization';
 
 interface Props {
   value: string;
@@ -11,11 +12,12 @@ interface Props {
 
 export function OtpInput({ value, onChange, error }: Props) {
   const inputRef = useRef<TextInput>(null);
+  const { isRTL, t } = useLocalization();
   const digits = Array.from({ length: 6 }, (_, index) => value[index] ?? '');
   return (
     <View>
       <Pressable
-        className="my-8 flex-row-reverse justify-between"
+        className={`my-8 justify-between ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}
         onPress={() => inputRef.current?.focus()}>
         {digits.map((digit, index) => (
           <View
@@ -31,7 +33,7 @@ export function OtpInput({ value, onChange, error }: Props) {
       </Pressable>
       <TextInput
         ref={inputRef}
-        accessibilityLabel="كود مكون من 6 أرقام"
+        accessibilityLabel={t('auth.otpAccessibility')}
         className="absolute h-1 w-1 opacity-0"
         keyboardType="number-pad"
         maxLength={6}

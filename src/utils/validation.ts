@@ -1,67 +1,104 @@
 import { z } from 'zod';
+import { translate, type Translate } from '../localization';
 
-const required = (label: string) => z.string().trim().min(1, `${label} مطلوب`);
+const defaultTranslate: Translate = (key, params) =>
+  translate('ar', key, params);
 
-export const emailSchema = z
-  .string()
-  .trim()
-  .min(1, 'البريد الالكتروني مطلوب')
-  .email('أدخل بريداً إلكترونياً صحيحاً');
+const required = (t: Translate, field: string) =>
+  z.string().trim().min(1, t('validation.required', { field }));
 
-export const passwordSchema = z
-  .string()
-  .min(8, 'كلمة المرور يجب أن تتكون من 8 حروف على الأقل')
-  .regex(/[0-9]/, 'كلمة المرور يجب أن تحتوي على رقم')
-  .regex(/[A-Z]/, 'كلمة المرور يجب أن تحتوي على حرف كبير');
+export const createEmailSchema = (t: Translate) =>
+  z
+    .string()
+    .trim()
+    .min(1, t('validation.emailRequired'))
+    .email(t('validation.emailInvalid'));
 
-export const loginSchema = z.object({
-  email: emailSchema,
-  password: z.string().min(1, 'كلمة المرور مطلوبة'),
-});
+export const createPasswordSchema = (t: Translate) =>
+  z
+    .string()
+    .min(8, t('validation.passwordMin'))
+    .regex(/[0-9]/, t('validation.passwordNumber'))
+    .regex(/[A-Z]/, t('validation.passwordUppercase'));
 
-export const registrationSchema = z
-  .object({
-    name: required('الاسم'),
-    birthDate: required('تاريخ الميلاد'),
-    stage: required('المرحلة'),
-    address: required('عنوان البيت'),
-    phone: required('رقم التليفون'),
-    whatsapp: required('رقم الواتس اب'),
-    school: required('المدرسة'),
-    classSaintName: required('اسم قديس الفصل'),
-    confessionFather: z.string().optional(),
-    talentsText: z.string().optional(),
-    email: emailSchema,
-    password: passwordSchema,
-    confirmPassword: z.string().min(1, 'تأكيد كلمة المرور مطلوب'),
-  })
-  .refine(values => values.password === values.confirmPassword, {
-    path: ['confirmPassword'],
-    message: 'كلمتا المرور غير متطابقتين',
-  });
-
-export const resetPasswordSchema = z
-  .object({
-    password: passwordSchema,
-    confirmPassword: z.string().min(1, 'تأكيد كلمة المرور مطلوب'),
-  })
-  .refine(values => values.password === values.confirmPassword, {
-    path: ['confirmPassword'],
-    message: 'كلمتا المرور غير متطابقتين',
-  });
-
-export const changePasswordSchema = resetPasswordSchema.and(
+export const createLoginSchema = (t: Translate) =>
   z.object({
-    currentPassword: z.string().min(1, 'كلمة المرور الحالية مطلوبة'),
-  }),
-);
+    email: createEmailSchema(t),
+    password: z.string().min(1, t('validation.passwordRequired')),
+  });
 
-export const verificationSchema = z.object({
-  code: z.string().regex(/^\d{6}$/, 'أدخل الكود المكون من 6 أرقام'),
-});
+export const createRegistrationSchema = (t: Translate) =>
+  z
+    .object({
+      name: required(t, t('fields.name')),
+      birthDate: required(t, t('fields.birthDate')),
+      stage: required(t, t('fields.stage')),
+      address: required(t, t('fields.address')),
+      phone: required(t, t('fields.phone')),
+      whatsapp: required(t, t('fields.whatsapp')),
+      school: required(t, t('fields.school')),
+      classSaintName: required(t, t('fields.classSaintName')),
+      confessionFather: z.string().optional(),
+      talentsText: z.string().optional(),
+      email: createEmailSchema(t),
+      password: createPasswordSchema(t),
+      confirmPassword: z
+        .string()
+        .min(1, t('validation.confirmPasswordRequired')),
+    })
+    .refine(values => values.password === values.confirmPassword, {
+      path: ['confirmPassword'],
+      message: t('validation.passwordsMismatch'),
+    });
 
-export type LoginForm = z.infer<typeof loginSchema>;
-export type RegistrationForm = z.infer<typeof registrationSchema>;
-export type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;
-export type ChangePasswordForm = z.infer<typeof changePasswordSchema>;
-export type VerificationForm = z.infer<typeof verificationSchema>;
+export const createResetPasswordSchema = (t: Translate) =>
+  z
+    .object({
+      password: createPasswordSchema(t),
+      confirmPassword: z
+        .string()
+        .min(1, t('validation.confirmPasswordRequired')),
+    })
+    .refine(values => values.password === values.confirmPassword, {
+      path: ['confirmPassword'],
+      message: t('validation.passwordsMismatch'),
+    });
+
+export const createChangePasswordSchema = (t: Translate) =>
+  createResetPasswordSchema(t).and(
+    z.object({
+      currentPassword: z
+        .string()
+        .min(1, t('validation.currentPasswordRequired')),
+    }),
+  );
+
+export const createVerificationSchema = (t: Translate) =>
+  z.object({
+    code: z.string().regex(/^\d{6}$/, t('validation.otpInvalid')),
+  });
+
+// Arabic defaults preserve the public schema exports used by non-React code
+// and tests. Screens use the factories above so messages follow the language.
+export const emailSchema = createEmailSchema(defaultTranslate);
+export const passwordSchema = createPasswordSchema(defaultTranslate);
+export const loginSchema = createLoginSchema(defaultTranslate);
+export const registrationSchema = createRegistrationSchema(defaultTranslate);
+export const resetPasswordSchema = createResetPasswordSchema(defaultTranslate);
+export const changePasswordSchema =
+  createChangePasswordSchema(defaultTranslate);
+export const verificationSchema = createVerificationSchema(defaultTranslate);
+
+export type LoginForm = z.infer<ReturnType<typeof createLoginSchema>>;
+export type RegistrationForm = z.infer<
+  ReturnType<typeof createRegistrationSchema>
+>;
+export type ResetPasswordForm = z.infer<
+  ReturnType<typeof createResetPasswordSchema>
+>;
+export type ChangePasswordForm = z.infer<
+  ReturnType<typeof createChangePasswordSchema>
+>;
+export type VerificationForm = z.infer<
+  ReturnType<typeof createVerificationSchema>
+>;

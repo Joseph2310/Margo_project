@@ -3,7 +3,7 @@ import type { IoniconsIconName } from '@react-native-vector-icons/ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { View } from 'react-native';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AppHeader } from '../../components/AppHeader';
 import { AppText } from '../../components/AppText';
 import { LinkButton } from '../../components/LinkButton';
@@ -13,65 +13,72 @@ import { PasswordRules } from '../../components/forms/PasswordRules';
 import { TextField } from '../../components/forms/TextField';
 import type { RootStackParamList } from '../../types/navigation';
 import {
-  registrationSchema,
+  createRegistrationSchema,
   type RegistrationForm,
 } from '../../utils/validation';
 import { useRegisterMutation } from '../../providers/AuthProvider/hooks';
 import { getApiErrorMessage } from '../../api/errors';
 import { splitTalents } from '../../utils/format';
+import { useLocalization, type TranslationKey } from '../../localization';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Register'>;
 
 const fields: Array<{
   name: keyof RegistrationForm;
-  label: string;
+  labelKey: TranslationKey;
   icon: IoniconsIconName;
   required?: boolean;
   keyboardType?: 'default' | 'phone-pad' | 'email-address';
 }> = [
-  { name: 'name', label: 'الاسم', icon: 'person', required: true },
+  { name: 'name', labelKey: 'fields.name', icon: 'person', required: true },
   {
     name: 'birthDate',
-    label: 'تاريخ الميلاد',
+    labelKey: 'fields.birthDate',
     icon: 'calendar',
     required: true,
   },
-  { name: 'stage', label: 'المرحلة', icon: 'people', required: true },
-  { name: 'address', label: 'عنوان البيت', icon: 'home', required: true },
+  { name: 'stage', labelKey: 'fields.stage', icon: 'people', required: true },
+  { name: 'address', labelKey: 'fields.address', icon: 'home', required: true },
   {
     name: 'phone',
-    label: 'رقم التليفون',
+    labelKey: 'fields.phone',
     icon: 'call',
     required: true,
     keyboardType: 'phone-pad',
   },
   {
     name: 'whatsapp',
-    label: 'رقم الواتس اب',
+    labelKey: 'fields.whatsapp',
     icon: 'logo-whatsapp',
     required: true,
     keyboardType: 'phone-pad',
   },
-  { name: 'school', label: 'المدرسة', icon: 'school', required: true },
+  { name: 'school', labelKey: 'fields.school', icon: 'school', required: true },
   {
     name: 'classSaintName',
-    label: 'اسم قديس الفصل',
+    labelKey: 'fields.classSaintName',
     icon: 'person-circle',
     required: true,
   },
-  { name: 'confessionFather', label: 'اب الاعتراف ( إختياري )', icon: 'body' },
-  { name: 'talentsText', label: 'المواهب', icon: 'add-circle' },
+  {
+    name: 'confessionFather',
+    labelKey: 'fields.confessionFatherOptional',
+    icon: 'body',
+  },
+  { name: 'talentsText', labelKey: 'fields.talents', icon: 'add-circle' },
 ];
 
 export function RegisterScreen({ navigation }: Props) {
+  const { isRTL, t } = useLocalization();
   const register = useRegisterMutation();
   const [serverError, setServerError] = useState<string>();
+  const schema = useMemo(() => createRegistrationSchema(t), [t]);
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<RegistrationForm>({
-    resolver: zodResolver(registrationSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       name: '',
       birthDate: '',
@@ -103,15 +110,15 @@ export function RegisterScreen({ navigation }: Props) {
         debugCode: challenge.verificationCode,
       });
     } catch (error) {
-      setServerError(getApiErrorMessage(error));
+      setServerError(getApiErrorMessage(error, t));
     }
   });
 
   return (
     <Screen>
-      <AppHeader title="إنشاء حساب" />
+      <AppHeader title={t('auth.createAccount')} />
       <AppText className="text-label mb-4 font-medium">
-        البيانات الشخصية
+        {t('auth.personalData')}
       </AppText>
       {fields.map(item => (
         <Controller
@@ -120,7 +127,7 @@ export function RegisterScreen({ navigation }: Props) {
           name={item.name}
           render={({ field }) => (
             <TextField
-              label={item.label}
+              label={t(item.labelKey)}
               icon={item.icon}
               required={item.required}
               keyboardType={item.keyboardType}
@@ -133,14 +140,14 @@ export function RegisterScreen({ navigation }: Props) {
         />
       ))}
       <AppText className="text-label mb-4 mt-2 font-medium">
-        البيانات الاساسية
+        {t('auth.basicData')}
       </AppText>
       <Controller
         control={control}
         name="email"
         render={({ field }) => (
           <TextField
-            label="البريد الالكتروني"
+            label={t('fields.email')}
             icon="mail"
             required
             autoCapitalize="none"
@@ -157,7 +164,7 @@ export function RegisterScreen({ navigation }: Props) {
         name="password"
         render={({ field }) => (
           <TextField
-            label="كلمة المرور"
+            label={t('fields.password')}
             icon="lock-closed"
             secureTextEntry
             value={field.value}
@@ -173,7 +180,7 @@ export function RegisterScreen({ navigation }: Props) {
         name="confirmPassword"
         render={({ field }) => (
           <TextField
-            label="تأكيد كلمة المرور"
+            label={t('fields.confirmPassword')}
             icon="lock-closed"
             secureTextEntry
             value={field.value}
@@ -191,14 +198,15 @@ export function RegisterScreen({ navigation }: Props) {
       ) : null}
       <PrimaryButton
         className="mt-4"
-        label="إنشاء حساب"
+        label={t('auth.createAccount')}
         loading={isSubmitting || register.isPending}
         onPress={submit}
       />
-      <View className="mt-6 flex-row-reverse justify-center gap-1">
-        <AppText>لديك حساب ؟</AppText>
+      <View
+        className={`mt-6 justify-center gap-1 ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
+        <AppText>{t('auth.haveAccount')}</AppText>
         <LinkButton
-          label="تسجيل دخول"
+          label={t('auth.signIn')}
           onPress={() => navigation.navigate('Login')}
         />
       </View>

@@ -6,20 +6,23 @@ import { QuestionCategoryCard } from '../../components/cards/QuestionCategoryCar
 import { QueryState } from '../../components/feedback/QueryState';
 import { useQuestionCategoriesQuery } from '../../providers/QuestionsProvider/hooks';
 import type { RootStackParamList } from '../../types/navigation';
+import { useLocalization } from '../../localization';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'QuestionCategories'>;
 
 export function QuestionCategoriesScreen({ navigation }: Props) {
+  const { isRTL, t } = useLocalization();
   const categories = useQuestionCategoriesQuery();
   return (
     <Screen>
-      <AppHeader title="بنك الأسئلة" />
+      <AppHeader title={t('home.questionBank')} />
       <QueryState
         loading={categories.isLoading}
         error={categories.isError}
         onRetry={() => categories.refetch()}
       />
-      <View className="flex-row-reverse flex-wrap justify-between">
+      <View
+        className={`${isRTL ? 'flex-row-reverse' : 'flex-row'} flex-wrap justify-between`}>
         {categories.data?.map(category => (
           <QuestionCategoryCard
             key={category.id}

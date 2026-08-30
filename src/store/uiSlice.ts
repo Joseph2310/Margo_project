@@ -1,14 +1,16 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import type { Language } from '../localization';
 
-interface UiState {
+export interface UiState {
   notice?: string;
+  language: Language;
 }
 
-const initialState: UiState = {};
+export const initialUiState: UiState = { language: 'ar' };
 
 const uiSlice = createSlice({
   name: 'ui',
-  initialState,
+  initialState: initialUiState,
   reducers: {
     showNotice(state, action: PayloadAction<string>) {
       state.notice = action.payload;
@@ -16,8 +18,11 @@ const uiSlice = createSlice({
     clearNotice(state) {
       state.notice = undefined;
     },
+    setLanguage(state, action: PayloadAction<Language>) {
+      state.language = action.payload;
+    },
   },
 });
 
-export const { showNotice, clearNotice } = uiSlice.actions;
+export const { showNotice, clearNotice, setLanguage } = uiSlice.actions;
 export const uiReducer = uiSlice.reducer;

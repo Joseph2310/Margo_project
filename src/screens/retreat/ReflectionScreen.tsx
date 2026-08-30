@@ -12,8 +12,10 @@ import {
 import { colors } from '../../theme/tokens';
 import { Alert } from 'react-native';
 import { getApiErrorMessage } from '../../api/errors';
+import { useLocalization } from '../../localization';
 
 export function ReflectionScreen() {
+  const { formatNumber, isRTL, t } = useLocalization();
   const reflection = useReflectionQuery();
   const completeReflection = useCompleteReflectionMutation();
   const [completed, setCompleted] = useState(false);
@@ -23,12 +25,12 @@ export function ReflectionScreen() {
       await completeReflection.mutateAsync(reflection.data.id);
       setCompleted(true);
     } catch (error) {
-      Alert.alert('تعذر حفظ الإكمال', getApiErrorMessage(error));
+      Alert.alert(t('reflection.completeError'), getApiErrorMessage(error, t));
     }
   };
   return (
     <Screen>
-      <AppHeader title="الريفلكشن" />
+      <AppHeader title={t('reflection.title')} />
       <QueryState
         loading={reflection.isLoading}
         error={reflection.isError}
@@ -42,18 +44,26 @@ export function ReflectionScreen() {
           <AppText align="center" className="mt-3 text-title font-bold">
             {reflection.data.title}
           </AppText>
-          <AppText className="text-label mb-2 mt-7">نقاط الدرس</AppText>
+          <AppText className="text-label mb-2 mt-7">
+            {t('reflection.lessonPoints')}
+          </AppText>
           {reflection.data.points.map((point, index) => (
             <AppText key={point} className="mb-1 text-body">
-              {index + 1}. {point}
+              {formatNumber(index + 1)}. {point}
             </AppText>
           ))}
-          <View className="mt-8 flex-row-reverse items-start gap-3">
+          <View
+            className={`mt-8 items-start gap-3 ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
             <View className="flex-1">
-              <AppText className="text-label">التدريب العملي للدرس</AppText>
+              <AppText className="text-label">
+                {t('reflection.exercise')}
+              </AppText>
               {reflection.data.exercisePoints ? (
                 <AppText className="mt-1 text-caption text-muted">
-                  🪙 {reflection.data.exercisePoints} نقطة
+                  🪙{' '}
+                  {t('common.points', {
+                    count: formatNumber(reflection.data.exercisePoints),
+                  })}
                 </AppText>
               ) : null}
             </View>

@@ -8,6 +8,7 @@ import { store } from '../store';
 import { configureApiClient } from '../api/apiClient';
 import { signIn, signOut } from '../store/authSlice';
 import { ConversationsRealtimeProvider } from './ConversationsProvider/RealtimeProvider';
+import { LocalizationProvider } from '../localization';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,9 +33,11 @@ export function AppProviders({ children }: PropsWithChildren) {
       <SafeAreaProvider>
         <ReduxProvider store={store}>
           <QueryClientProvider client={queryClient}>
-            <ConversationsRealtimeProvider>
-              {children}
-            </ConversationsRealtimeProvider>
+            <LocalizationProvider>
+              <ConversationsRealtimeProvider>
+                {children}
+              </ConversationsRealtimeProvider>
+            </LocalizationProvider>
           </QueryClientProvider>
         </ReduxProvider>
       </SafeAreaProvider>

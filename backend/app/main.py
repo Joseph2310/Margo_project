@@ -32,7 +32,8 @@ app = FastAPI(
     version=settings.app_version,
     debug=settings.app_debug,
     description=(
-        "Backend contract for the Arabic Beneficiaries mobile application. "
+        "Backend contract for the Arabic and English Beneficiaries mobile "
+        "application. Managed content follows the Accept-Language header. "
         "Authenticated endpoints use an HTTP Bearer access token. "
         "Real-time chat connects at /api/v1/conversations/ws and authenticates "
         "with an authenticate event containing the same access token. "

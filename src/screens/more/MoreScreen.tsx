@@ -12,8 +12,10 @@ import { colors } from '../../theme/tokens';
 import type { RootStackParamList } from '../../types/navigation';
 import { useProfileQuery } from '../../providers/ProfileProvider/hooks';
 import { useLogoutMutation } from '../../providers/AuthProvider/hooks';
+import { useLocalization } from '../../localization';
 
 export function MoreScreen() {
+  const { isRTL, language, t, toggleLanguage } = useLocalization();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const dispatch = useAppDispatch();
@@ -26,26 +28,33 @@ export function MoreScreen() {
     action: () => void;
   }> = [
     {
-      label: 'الاقتراحات',
+      label: t('more.suggestions'),
       icon: 'document-text',
       action: () => navigation.navigate('Suggestions'),
     },
     {
-      label: 'الريفليكشن',
+      label: t('more.reflection'),
       icon: 'bulb',
       action: () => navigation.navigate('Reflection'),
     },
     {
-      label: 'الإشعارات',
+      label: t('more.notifications'),
       icon: 'notifications',
       action: () => navigation.navigate('Notifications'),
     },
+    {
+      label: t('language.setting', {
+        language: t(language === 'ar' ? 'language.arabic' : 'language.english'),
+      }),
+      icon: 'language',
+      action: toggleLanguage,
+    },
   ];
   const logout = () =>
-    Alert.alert('تسجيل الخروج', 'هل تريد تسجيل الخروج؟', [
-      { text: 'إلغاء', style: 'cancel' },
+    Alert.alert(t('more.logout'), t('more.logoutPrompt'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'تسجيل الخروج',
+        text: t('more.logout'),
         style: 'destructive',
         onPress: async () => {
           if (refreshToken) {
@@ -62,31 +71,32 @@ export function MoreScreen() {
   return (
     <Screen scroll={false} bottomInset={false}>
       <AppText align="center" className="my-5 text-title">
-        القائمة
+        {t('more.title')}
       </AppText>
-      <View className="mb-10 flex-row-reverse items-center rounded-card bg-white p-3">
+      <View
+        className={`mb-10 items-center gap-4 rounded-card bg-white p-3 ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
         <View className="h-14 w-14 items-center justify-center rounded-full bg-rose">
           <Ionicons name="person" size={28} color={colors.primary} />
         </View>
-        <AppText className="text-label mr-4 font-bold text-primary">
+        <AppText className="text-label font-bold text-primary">
           {profile.data?.name ?? ''}
         </AppText>
       </View>
       {items.map(item => (
         <Pressable
           key={item.label}
-          className="mb-6 flex-row-reverse items-center bg-primary-soft px-3 py-2"
+          className={`mb-6 items-center gap-3 bg-primary-soft px-3 py-2 ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}
           onPress={item.action}>
           <Ionicons name={item.icon} size={25} color={colors.primary} />
-          <AppText className="text-label mr-3">{item.label}</AppText>
+          <AppText className="text-label">{item.label}</AppText>
         </Pressable>
       ))}
       <Pressable
-        className="mb-10 mt-auto flex-row-reverse items-center gap-2"
+        className={`mb-10 mt-auto items-center gap-2 ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}
         onPress={logout}>
         <Ionicons name="log-out-outline" size={26} color={colors.primary} />
         <AppText className="text-label font-bold text-primary">
-          تسجيل الخروج
+          {t('more.logout')}
         </AppText>
       </Pressable>
     </Screen>

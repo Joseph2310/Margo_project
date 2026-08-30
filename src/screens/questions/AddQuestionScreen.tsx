@@ -8,8 +8,10 @@ import { Screen } from '../../components/Screen';
 import { colors } from '../../theme/tokens';
 import { useProposeQuestionMutation } from '../../providers/QuestionsProvider/hooks';
 import { getApiErrorMessage } from '../../api/errors';
+import { directionStyles, useLocalization } from '../../localization';
 
 export function AddQuestionScreen() {
+  const { isRTL, t } = useLocalization();
   const [question, setQuestion] = useState('');
   const [sent, setSent] = useState(false);
   const proposeQuestion = useProposeQuestionMutation();
@@ -19,18 +21,20 @@ export function AddQuestionScreen() {
       setSent(true);
       setQuestion('');
     } catch (error) {
-      Alert.alert('تعذر إرسال السؤال', getApiErrorMessage(error));
+      Alert.alert(t('questions.sendError'), getApiErrorMessage(error, t));
     }
   };
   return (
     <Screen scroll={false}>
-      <AppHeader title="بنك الأسئلة" />
-      <AppText className="text-label mb-2">السؤال المقترح</AppText>
+      <AppHeader title={t('home.questionBank')} />
+      <AppText className="text-label mb-2">{t('questions.proposed')}</AppText>
       <TextInput
         multiline
-        className="h-28 rounded-md bg-input p-3 text-right text-ink"
+        className="h-28 rounded-md bg-input p-3 text-ink"
         selectionColor={colors.primary}
         textAlignVertical="top"
+        textAlign={isRTL ? 'right' : 'left'}
+        style={isRTL ? directionStyles.rtlText : directionStyles.ltrText}
         value={question}
         onChangeText={value => {
           setQuestion(value);
@@ -39,12 +43,12 @@ export function AddQuestionScreen() {
       />
       {sent ? (
         <AppText align="center" className="mt-4 text-primary">
-          تم إرسال السؤال المقترح
+          {t('questions.sent')}
         </AppText>
       ) : null}
       <PrimaryButton
         className="mb-8 mt-auto"
-        label="إرسال!"
+        label={t('common.send')}
         disabled={!question.trim()}
         loading={proposeQuestion.isPending}
         onPress={send}

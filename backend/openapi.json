@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Beneficiaries API",
-    "description": "Backend contract for the Arabic Beneficiaries mobile application. Authenticated endpoints use an HTTP Bearer access token. Real-time chat connects at /api/v1/conversations/ws and authenticates with an authenticate event containing the same access token. Business-controlled values such as points, attendance QR values, submission status, and duplicate awards are calculated by the server.",
+    "description": "Backend contract for the Arabic and English Beneficiaries mobile application. Managed content follows the Accept-Language header. Authenticated endpoints use an HTTP Bearer access token. Real-time chat connects at /api/v1/conversations/ws and authenticates with an authenticate event containing the same access token. Business-controlled values such as points, attendance QR values, submission status, and duplicate awards are calculated by the server.",
     "contact": {
       "name": "Beneficiaries application team"
     },
@@ -14,7 +14,9 @@
   "paths": {
     "/health": {
       "get": {
-        "tags": ["System"],
+        "tags": [
+          "System"
+        ],
         "summary": "Check API and database health",
         "operationId": "health_health_get",
         "responses": {
@@ -113,7 +115,9 @@
     },
     "/api/v1/auth/register": {
       "post": {
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "summary": "Register a beneficiary and send a verification code",
         "operationId": "register_api_v1_auth_register_post",
         "requestBody": {
@@ -222,7 +226,9 @@
     },
     "/api/v1/auth/verification/verify": {
       "post": {
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "summary": "Verify registration, activation, or password-reset code",
         "operationId": "verify_code_api_v1_auth_verification_verify_post",
         "requestBody": {
@@ -331,7 +337,9 @@
     },
     "/api/v1/auth/verification/resend": {
       "post": {
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "summary": "Resend a verification code",
         "operationId": "resend_code_api_v1_auth_verification_resend_post",
         "requestBody": {
@@ -440,7 +448,9 @@
     },
     "/api/v1/auth/login": {
       "post": {
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "summary": "Log in with email and password",
         "operationId": "login_api_v1_auth_login_post",
         "requestBody": {
@@ -549,7 +559,9 @@
     },
     "/api/v1/auth/password/forgot": {
       "post": {
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "summary": "Request a password-reset verification code",
         "operationId": "forgot_password_api_v1_auth_password_forgot_post",
         "requestBody": {
@@ -658,7 +670,9 @@
     },
     "/api/v1/auth/password/reset": {
       "post": {
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "summary": "Set a new password using a verified reset token",
         "operationId": "reset_password_api_v1_auth_password_reset_post",
         "requestBody": {
@@ -767,7 +781,9 @@
     },
     "/api/v1/auth/password/change": {
       "post": {
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "summary": "Change the authenticated beneficiary password",
         "operationId": "change_password_api_v1_auth_password_change_post",
         "requestBody": {
@@ -881,7 +897,9 @@
     },
     "/api/v1/auth/refresh": {
       "post": {
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "summary": "Rotate a refresh token",
         "operationId": "refresh_session_api_v1_auth_refresh_post",
         "requestBody": {
@@ -990,7 +1008,9 @@
     },
     "/api/v1/auth/logout": {
       "post": {
-        "tags": ["Authentication"],
+        "tags": [
+          "Authentication"
+        ],
         "summary": "Log out",
         "operationId": "logout_api_v1_auth_logout_post",
         "requestBody": {
@@ -1092,7 +1112,9 @@
     },
     "/api/v1/profile": {
       "get": {
-        "tags": ["Profile"],
+        "tags": [
+          "Profile"
+        ],
         "summary": "Get my profile",
         "operationId": "get_profile_api_v1_profile_get",
         "responses": {
@@ -1194,7 +1216,9 @@
         ]
       },
       "patch": {
-        "tags": ["Profile"],
+        "tags": [
+          "Profile"
+        ],
         "summary": "Update my editable profile fields",
         "operationId": "update_profile_api_v1_profile_patch",
         "requestBody": {
@@ -1308,7 +1332,9 @@
     },
     "/api/v1/profile/whatsapp-group": {
       "get": {
-        "tags": ["Profile"],
+        "tags": [
+          "Profile"
+        ],
         "summary": "Get the configured Sunday-school WhatsApp group link",
         "operationId": "get_whatsapp_group_api_v1_profile_whatsapp_group_get",
         "responses": {
@@ -1412,7 +1438,9 @@
     },
     "/api/v1/events": {
       "get": {
-        "tags": ["Home and Content"],
+        "tags": [
+          "Home and Content"
+        ],
         "summary": "List upcoming published events",
         "operationId": "list_events_api_v1_events_get",
         "security": [
@@ -1436,6 +1464,22 @@
                 }
               ],
               "title": "Fromdate"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Accept-Language"
             }
           }
         ],
@@ -1539,9 +1583,34 @@
     },
     "/api/v1/readings/today": {
       "get": {
-        "tags": ["Home and Content"],
+        "tags": [
+          "Home and Content"
+        ],
         "summary": "Get today's daily reading, or the latest published reading",
         "operationId": "get_daily_reading_api_v1_readings_today_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Accept-Language"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1641,19 +1710,39 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/home": {
       "get": {
-        "tags": ["Home and Content"],
+        "tags": [
+          "Home and Content"
+        ],
         "summary": "Get the authenticated beneficiary home dashboard",
         "operationId": "get_home_api_v1_home_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Accept-Language"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1745,29 +1834,49 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/questions/categories": {
       "get": {
-        "tags": ["Questions"],
+        "tags": [
+          "Questions"
+        ],
         "summary": "List active question-bank categories",
         "operationId": "list_categories_api_v1_questions_categories_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Accept-Language"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
+                  "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/QuestionCategoryResponse"
                   },
-                  "type": "array",
                   "title": "Response List Categories Api V1 Questions Categories Get"
                 }
               }
@@ -1853,17 +1962,14 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/questions": {
       "get": {
-        "tags": ["Questions"],
+        "tags": [
+          "Questions"
+        ],
         "summary": "List published questions in one category",
         "operationId": "list_questions_api_v1_questions_get",
         "security": [
@@ -1879,6 +1985,22 @@
             "schema": {
               "type": "string",
               "title": "Categoryid"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Accept-Language"
             }
           }
         ],
@@ -1982,7 +2104,9 @@
     },
     "/api/v1/questions/proposals": {
       "post": {
-        "tags": ["Questions"],
+        "tags": [
+          "Questions"
+        ],
         "summary": "Propose a question for servant review",
         "operationId": "propose_question_api_v1_questions_proposals_post",
         "requestBody": {
@@ -2096,19 +2220,44 @@
     },
     "/api/v1/questions/know-me": {
       "get": {
-        "tags": ["Questions"],
+        "tags": [
+          "Questions"
+        ],
         "summary": "List recent Know Me questions and answer status",
         "operationId": "list_know_me_questions_api_v1_questions_know_me_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Accept-Language"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
+                  "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/KnowMeQuestionResponse"
                   },
-                  "type": "array",
                   "title": "Response List Know Me Questions Api V1 Questions Know Me Get"
                 }
               }
@@ -2194,17 +2343,14 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/questions/know-me/{question_id}/answers": {
       "post": {
-        "tags": ["Questions"],
+        "tags": [
+          "Questions"
+        ],
         "summary": "Answer a Know Me question and award eligible points once",
         "operationId": "submit_know_me_answer_api_v1_questions_know_me__question_id__answers_post",
         "security": [
@@ -2329,19 +2475,44 @@
     },
     "/api/v1/retreat/activities": {
       "get": {
-        "tags": ["Retreat and Reflection"],
+        "tags": [
+          "Retreat and Reflection"
+        ],
         "summary": "List active spiritual activities",
         "operationId": "list_activities_api_v1_retreat_activities_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Accept-Language"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
+                  "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/SpiritualActivityResponse"
                   },
-                  "type": "array",
                   "title": "Response List Activities Api V1 Retreat Activities Get"
                 }
               }
@@ -2427,17 +2598,14 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/retreat/submissions": {
       "post": {
-        "tags": ["Retreat and Reflection"],
+        "tags": [
+          "Retreat and Reflection"
+        ],
         "summary": "Submit today's retreat activities and reflection",
         "operationId": "submit_retreat_api_v1_retreat_submissions_post",
         "requestBody": {
@@ -2551,9 +2719,34 @@
     },
     "/api/v1/retreat/reflection/latest": {
       "get": {
-        "tags": ["Retreat and Reflection"],
+        "tags": [
+          "Retreat and Reflection"
+        ],
         "summary": "Get the latest published reflection lesson",
         "operationId": "get_latest_reflection_api_v1_retreat_reflection_latest_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Accept-Language"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2653,17 +2846,14 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/retreat/reflection/{lesson_id}/complete": {
       "post": {
-        "tags": ["Retreat and Reflection"],
+        "tags": [
+          "Retreat and Reflection"
+        ],
         "summary": "Complete a reflection exercise and award points once",
         "operationId": "complete_reflection_api_v1_retreat_reflection__lesson_id__complete_post",
         "security": [
@@ -2778,7 +2968,9 @@
     },
     "/api/v1/conversations": {
       "get": {
-        "tags": ["Conversations"],
+        "tags": [
+          "Conversations"
+        ],
         "summary": "List my active private conversations",
         "operationId": "list_conversations_api_v1_conversations_get",
         "security": [
@@ -2802,6 +2994,22 @@
                 }
               ],
               "title": "Search"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Accept-Language"
             }
           }
         ],
@@ -2905,7 +3113,9 @@
     },
     "/api/v1/conversations/{conversation_id}": {
       "get": {
-        "tags": ["Conversations"],
+        "tags": [
+          "Conversations"
+        ],
         "summary": "Get an authorized conversation and its message history",
         "operationId": "get_conversation_api_v1_conversations__conversation_id__get",
         "security": [
@@ -2921,6 +3131,22 @@
             "schema": {
               "type": "string",
               "title": "Conversation Id"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Accept-Language"
             }
           }
         ],
@@ -3018,7 +3244,9 @@
         }
       },
       "delete": {
-        "tags": ["Conversations"],
+        "tags": [
+          "Conversations"
+        ],
         "summary": "Remove a private conversation from my list",
         "operationId": "delete_conversation_api_v1_conversations__conversation_id__delete",
         "security": [
@@ -3133,18 +3361,43 @@
     },
     "/api/v1/conversations/messages": {
       "post": {
-        "tags": ["Conversations"],
+        "tags": [
+          "Conversations"
+        ],
         "summary": "Persist and deliver a text, image, or voice message",
         "operationId": "send_message_api_v1_conversations_messages_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Accept-Language"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SendMessageRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -3237,17 +3490,14 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/conversations/{conversation_id}/read": {
       "post": {
-        "tags": ["Conversations"],
+        "tags": [
+          "Conversations"
+        ],
         "summary": "Mark messages from other participants as read",
         "operationId": "mark_conversation_read_api_v1_conversations__conversation_id__read_post",
         "security": [
@@ -3362,7 +3612,9 @@
     },
     "/api/v1/conversations/{conversation_id}/block": {
       "post": {
-        "tags": ["Conversations"],
+        "tags": [
+          "Conversations"
+        ],
         "summary": "Block a private servant conversation",
         "operationId": "block_conversation_api_v1_conversations__conversation_id__block_post",
         "security": [
@@ -3477,7 +3729,9 @@
     },
     "/api/v1/suggestions": {
       "post": {
-        "tags": ["Suggestions"],
+        "tags": [
+          "Suggestions"
+        ],
         "summary": "Submit Sunday-school suggestions and hymn rating",
         "operationId": "submit_suggestion_api_v1_suggestions_post",
         "requestBody": {
@@ -3591,19 +3845,44 @@
     },
     "/api/v1/notifications": {
       "get": {
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "summary": "List my notifications newest first",
         "operationId": "list_notifications_api_v1_notifications_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Accept-Language"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
+                  "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/NotificationResponse"
                   },
-                  "type": "array",
                   "title": "Response List Notifications Api V1 Notifications Get"
                 }
               }
@@ -3689,17 +3968,14 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/notifications/{notification_id}/read": {
       "patch": {
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "summary": "Mark one notification as read",
         "operationId": "mark_notification_read_api_v1_notifications__notification_id__read_patch",
         "security": [
@@ -3715,6 +3991,22 @@
             "schema": {
               "type": "string",
               "title": "Notification Id"
+            }
+          },
+          {
+            "name": "Accept-Language",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Accept-Language"
             }
           }
         ],
@@ -3814,7 +4106,9 @@
     },
     "/api/v1/notifications/read-all": {
       "patch": {
-        "tags": ["Notifications"],
+        "tags": [
+          "Notifications"
+        ],
         "summary": "Mark all my notifications as read",
         "operationId": "mark_all_notifications_read_api_v1_notifications_read_all_patch",
         "responses": {
@@ -3945,7 +4239,10 @@
           }
         },
         "type": "object",
-        "required": ["message", "code"],
+        "required": [
+          "message",
+          "code"
+        ],
         "title": "ApiError"
       },
       "AuthSession": {
@@ -4259,12 +4556,19 @@
           }
         },
         "type": "object",
-        "required": ["password", "confirmPassword", "currentPassword"],
+        "required": [
+          "password",
+          "confirmPassword",
+          "currentPassword"
+        ],
         "title": "ChangePasswordRequest"
       },
       "ConversationKind": {
         "type": "string",
-        "enum": ["direct", "house"],
+        "enum": [
+          "direct",
+          "house"
+        ],
         "title": "ConversationKind"
       },
       "ConversationMessageResponse": {
@@ -4279,6 +4583,10 @@
           "senderName": {
             "type": "string",
             "title": "Sendername"
+          },
+          "isAnonymous": {
+            "type": "boolean",
+            "title": "Isanonymous"
           },
           "kind": {
             "$ref": "#/components/schemas/MessageKind"
@@ -4329,6 +4637,7 @@
           "id",
           "sender",
           "senderName",
+          "isAnonymous",
           "kind",
           "content",
           "createdAt",
@@ -4378,7 +4687,11 @@
       },
       "ConversationStatus": {
         "type": "string",
-        "enum": ["active", "blocked", "deleted"],
+        "enum": [
+          "active",
+          "blocked",
+          "deleted"
+        ],
         "title": "ConversationStatus"
       },
       "DailyReadingResponse": {
@@ -4412,7 +4725,12 @@
           }
         },
         "type": "object",
-        "required": ["id", "date", "reference", "title"],
+        "required": [
+          "id",
+          "date",
+          "reference",
+          "title"
+        ],
         "title": "DailyReadingResponse"
       },
       "ForgotPasswordRequest": {
@@ -4424,7 +4742,9 @@
           }
         },
         "type": "object",
-        "required": ["email"],
+        "required": [
+          "email"
+        ],
         "title": "ForgotPasswordRequest"
       },
       "HealthResponse": {
@@ -4443,7 +4763,11 @@
           }
         },
         "type": "object",
-        "required": ["status", "database", "version"],
+        "required": [
+          "status",
+          "database",
+          "version"
+        ],
         "title": "HealthResponse"
       },
       "HomeDashboardResponse": {
@@ -4503,7 +4827,9 @@
           }
         },
         "type": "object",
-        "required": ["answer"],
+        "required": [
+          "answer"
+        ],
         "title": "KnowMeAnswerRequest"
       },
       "KnowMeQuestionResponse": {
@@ -4535,7 +4861,13 @@
           }
         },
         "type": "object",
-        "required": ["id", "label", "askedAt", "isToday", "points"],
+        "required": [
+          "id",
+          "label",
+          "askedAt",
+          "isToday",
+          "points"
+        ],
         "title": "KnowMeQuestionResponse"
       },
       "LoginRequest": {
@@ -4553,7 +4885,10 @@
           }
         },
         "type": "object",
-        "required": ["email", "password"],
+        "required": [
+          "email",
+          "password"
+        ],
         "title": "LoginRequest"
       },
       "LogoutRequest": {
@@ -4565,7 +4900,9 @@
           }
         },
         "type": "object",
-        "required": ["refreshToken"],
+        "required": [
+          "refreshToken"
+        ],
         "title": "LogoutRequest"
       },
       "MarkConversationReadResponse": {
@@ -4576,17 +4913,27 @@
           }
         },
         "type": "object",
-        "required": ["updatedCount"],
+        "required": [
+          "updatedCount"
+        ],
         "title": "MarkConversationReadResponse"
       },
       "MessageDeliveryStatus": {
         "type": "string",
-        "enum": ["sent", "delivered", "read"],
+        "enum": [
+          "sent",
+          "delivered",
+          "read"
+        ],
         "title": "MessageDeliveryStatus"
       },
       "MessageKind": {
         "type": "string",
-        "enum": ["text", "image", "voice"],
+        "enum": [
+          "text",
+          "image",
+          "voice"
+        ],
         "title": "MessageKind"
       },
       "MessageResponse": {
@@ -4597,7 +4944,9 @@
           }
         },
         "type": "object",
-        "required": ["message"],
+        "required": [
+          "message"
+        ],
         "title": "MessageResponse"
       },
       "NotificationResponse": {
@@ -4625,12 +4974,22 @@
           }
         },
         "type": "object",
-        "required": ["id", "title", "body", "isRead", "createdAt"],
+        "required": [
+          "id",
+          "title",
+          "body",
+          "isRead",
+          "createdAt"
+        ],
         "title": "NotificationResponse"
       },
       "ProposalStatus": {
         "type": "string",
-        "enum": ["pending", "approved", "rejected"],
+        "enum": [
+          "pending",
+          "approved",
+          "rejected"
+        ],
         "title": "ProposalStatus"
       },
       "QuestionAnswerResponse": {
@@ -4653,7 +5012,12 @@
           }
         },
         "type": "object",
-        "required": ["id", "categoryId", "question", "answer"],
+        "required": [
+          "id",
+          "categoryId",
+          "question",
+          "answer"
+        ],
         "title": "QuestionAnswerResponse"
       },
       "QuestionCategoryResponse": {
@@ -4676,7 +5040,12 @@
           }
         },
         "type": "object",
-        "required": ["id", "title", "icon", "color"],
+        "required": [
+          "id",
+          "title",
+          "icon",
+          "color"
+        ],
         "title": "QuestionCategoryResponse"
       },
       "QuestionProposalRequest": {
@@ -4689,7 +5058,9 @@
           }
         },
         "type": "object",
-        "required": ["question"],
+        "required": [
+          "question"
+        ],
         "title": "QuestionProposalRequest"
       },
       "QuestionProposalResponse": {
@@ -4707,7 +5078,11 @@
           }
         },
         "type": "object",
-        "required": ["id", "status", "message"],
+        "required": [
+          "id",
+          "status",
+          "message"
+        ],
         "title": "QuestionProposalResponse"
       },
       "ReflectionLessonResponse": {
@@ -4753,7 +5128,13 @@
           }
         },
         "type": "object",
-        "required": ["id", "date", "title", "points", "exercise"],
+        "required": [
+          "id",
+          "date",
+          "title",
+          "points",
+          "exercise"
+        ],
         "title": "ReflectionLessonResponse"
       },
       "RefreshTokenRequest": {
@@ -4765,7 +5146,9 @@
           }
         },
         "type": "object",
-        "required": ["refreshToken"],
+        "required": [
+          "refreshToken"
+        ],
         "title": "RefreshTokenRequest"
       },
       "RegistrationRequest": {
@@ -4884,7 +5267,10 @@
           }
         },
         "type": "object",
-        "required": ["email", "mode"],
+        "required": [
+          "email",
+          "mode"
+        ],
         "title": "ResendVerificationRequest"
       },
       "ResetPasswordRequest": {
@@ -4913,7 +5299,12 @@
           }
         },
         "type": "object",
-        "required": ["password", "confirmPassword", "email", "resetToken"],
+        "required": [
+          "password",
+          "confirmPassword",
+          "email",
+          "resetToken"
+        ],
         "title": "ResetPasswordRequest"
       },
       "RetreatSubmissionRequest": {
@@ -4972,7 +5363,9 @@
           }
         },
         "type": "object",
-        "required": ["content"],
+        "required": [
+          "content"
+        ],
         "title": "SendMessageRequest"
       },
       "SendMessageResponse": {
@@ -4986,12 +5379,18 @@
           }
         },
         "type": "object",
-        "required": ["conversationId", "message"],
+        "required": [
+          "conversationId",
+          "message"
+        ],
         "title": "SendMessageResponse"
       },
       "SenderKind": {
         "type": "string",
-        "enum": ["beneficiary", "servant"],
+        "enum": [
+          "beneficiary",
+          "servant"
+        ],
         "title": "SenderKind"
       },
       "SpiritualActivityResponse": {
@@ -5028,7 +5427,10 @@
           }
         },
         "type": "object",
-        "required": ["id", "title"],
+        "required": [
+          "id",
+          "title"
+        ],
         "title": "SpiritualActivityResponse"
       },
       "SubmissionResult": {
@@ -5051,7 +5453,12 @@
           }
         },
         "type": "object",
-        "required": ["id", "pointsAwarded", "totalPoints", "message"],
+        "required": [
+          "id",
+          "pointsAwarded",
+          "totalPoints",
+          "message"
+        ],
         "title": "SubmissionResult"
       },
       "SuggestionRequest": {
@@ -5102,7 +5509,10 @@
           }
         },
         "type": "object",
-        "required": ["id", "message"],
+        "required": [
+          "id",
+          "message"
+        ],
         "title": "SuggestionResponse"
       },
       "VerificationChallenge": {
@@ -5137,12 +5547,21 @@
           }
         },
         "type": "object",
-        "required": ["email", "mode", "expiresInSeconds", "message"],
+        "required": [
+          "email",
+          "mode",
+          "expiresInSeconds",
+          "message"
+        ],
         "title": "VerificationChallenge"
       },
       "VerificationPurpose": {
         "type": "string",
-        "enum": ["activation", "registration", "passwordReset"],
+        "enum": [
+          "activation",
+          "registration",
+          "passwordReset"
+        ],
         "title": "VerificationPurpose"
       },
       "VerificationRequest": {
@@ -5162,7 +5581,11 @@
           }
         },
         "type": "object",
-        "required": ["email", "code", "mode"],
+        "required": [
+          "email",
+          "code",
+          "mode"
+        ],
         "title": "VerificationRequest"
       },
       "VerificationResult": {
@@ -5204,7 +5627,9 @@
           }
         },
         "type": "object",
-        "required": ["mode"],
+        "required": [
+          "mode"
+        ],
         "title": "VerificationResult"
       },
       "WhatsAppGroupResponse": {
@@ -5215,7 +5640,9 @@
           }
         },
         "type": "object",
-        "required": ["url"],
+        "required": [
+          "url"
+        ],
         "title": "WhatsAppGroupResponse"
       }
     },

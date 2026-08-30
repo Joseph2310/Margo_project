@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.exceptions import AppError
+from app.localization import Language, get_language, localized
 from app.models import (
     ActivityCompletion,
     ReflectionCompletion,
@@ -33,14 +34,26 @@ router = APIRouter(prefix="/retreat", tags=["Retreat and Reflection"])
     summary="List active spiritual activities",
 )
 def list_activities(
-    _: User = Depends(get_current_user), db: Session = Depends(get_db)
+    language: Language = Depends(get_language),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> list[SpiritualActivityResponse]:
     activities = db.scalars(
         select(SpiritualActivity)
         .where(SpiritualActivity.is_active.is_(True))
         .order_by(SpiritualActivity.sort_order)
     ).all()
-    return [SpiritualActivityResponse.model_validate(item) for item in activities]
+    return [
+        SpiritualActivityResponse(
+            id=item.id,
+            title=localized(item.title, item.title_en, language),
+            points=item.points,
+            description=localized(
+                item.description, item.description_en, language
+            ),
+        )
+        for item in activities
+    ]
 
 
 @router.post(
@@ -129,7 +142,9 @@ def submit_retreat(
     summary="Get the latest published reflection lesson",
 )
 def get_latest_reflection(
-    user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    language: Language = Depends(get_language),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> ReflectionLessonResponse | None:
     lesson = db.scalar(
         select(ReflectionLesson)
@@ -146,10 +161,10 @@ def get_latest_reflection(
     )
     return ReflectionLessonResponse(
         id=lesson.id,
-        date=lesson.date_label,
-        title=lesson.title,
-        points=lesson.points,
-        exercise=lesson.exercise,
+        date=localized(lesson.date_label, lesson.date_label_en, language),
+        title=localized(lesson.title, lesson.title_en, language),
+        points=localized(lesson.points, lesson.points_en, language),
+        exercise=localized(lesson.exercise, lesson.exercise_en, language),
         exercise_points=lesson.exercise_points,
         completed=bool(completed),
     )

@@ -4,12 +4,14 @@ import { AppText } from '../../components/AppText';
 import { Screen } from '../../components/Screen';
 import { QueryState } from '../../components/feedback/QueryState';
 import { useDailyReadingQuery } from '../../providers/HomeProvider/hooks';
+import { useLocalization } from '../../localization';
 
 export function DailyReadingScreen() {
+  const { t } = useLocalization();
   const reading = useDailyReadingQuery();
   return (
     <Screen>
-      <AppHeader title="قراءة اليوم" />
+      <AppHeader title={t('home.dailyReading')} />
       <QueryState
         loading={reading.isLoading}
         error={reading.isError}

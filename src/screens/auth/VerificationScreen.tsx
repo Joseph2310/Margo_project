@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Controller, useForm } from 'react-hook-form';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { AppHeader } from '../../components/AppHeader';
 import { AppText } from '../../components/AppText';
@@ -13,9 +13,8 @@ import { useCountdown } from '../../hooks/useCountdown';
 import { signIn } from '../../store/authSlice';
 import { useAppDispatch } from '../../store/hooks';
 import type { RootStackParamList } from '../../types/navigation';
-import { toArabicDigits } from '../../utils/format';
 import {
-  verificationSchema,
+  createVerificationSchema,
   type VerificationForm,
 } from '../../utils/validation';
 import {
@@ -23,30 +22,35 @@ import {
   useVerifyMutation,
 } from '../../providers/AuthProvider/hooks';
 import { getApiErrorMessage } from '../../api/errors';
+import { useLocalization } from '../../localization';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Verification'>;
 
 export function VerificationScreen({ route, navigation }: Props) {
   const dispatch = useAppDispatch();
+  const { formatNumber, isRTL, t } = useLocalization();
   const verify = useVerifyMutation();
   const resend = useResendVerificationMutation();
   const { seconds, restart } = useCountdown(60);
   const { mode, email } = route.params;
   const [serverError, setServerError] = useState<string>();
   const [debugCode, setDebugCode] = useState(route.params.debugCode);
+  const schema = useMemo(() => createVerificationSchema(t), [t]);
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<VerificationForm>({
-    resolver: zodResolver(verificationSchema),
+    resolver: zodResolver(schema),
     defaultValues: { code: '' },
   });
   const activation = mode === 'activation';
-  const title = activation ? 'تأكيد تفعيل الحساب' : 'كود التسجيل';
+  const title = activation
+    ? t('auth.activationTitle')
+    : t('auth.registrationCodeTitle');
   const description = activation
-    ? 'ادخل كود تفعيل الحساب المرسل لك'
-    : 'من فضلك ادخل كود التسجيل الذى تم ارساله الى بريدك الالكترونى';
+    ? t('auth.activationDescription')
+    : t('auth.registrationCodeDescription');
 
   const submit = handleSubmit(async values => {
     setServerError(undefined);
@@ -58,7 +62,7 @@ export function VerificationScreen({ route, navigation }: Props) {
       });
       if (mode === 'passwordReset') {
         if (!result.passwordResetToken) {
-          throw new Error('لم يتم إصدار رمز إعادة تعيين كلمة المرور');
+          throw new Error(t('auth.missingResetToken'));
         }
         navigation.replace('ResetPassword', {
           email,
@@ -66,10 +70,10 @@ export function VerificationScreen({ route, navigation }: Props) {
         });
         return;
       }
-      if (!result.session) throw new Error('تعذر بدء جلسة المستخدم');
+      if (!result.session) throw new Error(t('auth.sessionStartFailed'));
       dispatch(signIn(result.session));
     } catch (error) {
-      setServerError(getApiErrorMessage(error));
+      setServerError(getApiErrorMessage(error, t));
     }
   });
 
@@ -80,7 +84,7 @@ export function VerificationScreen({ route, navigation }: Props) {
       setDebugCode(challenge.verificationCode);
       restart();
     } catch (error) {
-      setServerError(getApiErrorMessage(error));
+      setServerError(getApiErrorMessage(error, t));
     }
   };
 
@@ -96,7 +100,7 @@ export function VerificationScreen({ route, navigation }: Props) {
         </AppText>
         {debugCode ? (
           <AppText align="center" className="text-small mt-2 text-muted">
-            كود بيئة الاختبار: {debugCode}
+            {t('auth.debugCode', { code: debugCode })}
           </AppText>
         ) : null}
       </View>
@@ -114,16 +118,12 @@ export function VerificationScreen({ route, navigation }: Props) {
       <View className="mb-16 items-center">
         {seconds > 0 ? (
           <AppText align="center" className="text-small text-muted">
-            سيصلك الكود خلال{' '}
-            <AppText className="text-primary">
-              {toArabicDigits(seconds)}
-            </AppText>{' '}
-            ثانية
+            {t('auth.codeCountdown', { seconds: formatNumber(seconds) })}
           </AppText>
         ) : (
-          <View className="flex-row-reverse gap-1">
-            <AppText className="text-small">لم تستقبل كود</AppText>
-            <LinkButton label="إعادة إرسال؟" onPress={resendCode} />
+          <View className={`gap-1 ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
+            <AppText className="text-small">{t('auth.noCode')}</AppText>
+            <LinkButton label={t('auth.resendCode')} onPress={resendCode} />
           </View>
         )}
       </View>
@@ -133,7 +133,7 @@ export function VerificationScreen({ route, navigation }: Props) {
         </AppText>
       ) : null}
       <PrimaryButton
-        label="متابعة"
+        label={t('common.continue')}
         loading={isSubmitting || verify.isPending || resend.isPending}
         onPress={submit}
       />

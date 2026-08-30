@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.database import SessionLocal, get_db
 from app.dependencies import get_current_user
 from app.exceptions import AppError, error_body
+from app.localization import Language, get_language, localized
 from app.models import (
     Conversation,
     ConversationKind,
@@ -37,12 +38,19 @@ router = APIRouter(prefix="/conversations", tags=["Conversations"])
 
 
 def serialize_message(
-    message: ConversationMessage, current_user_id: str
+    message: ConversationMessage,
+    current_user_id: str,
+    language: Language = "ar",
 ) -> ConversationMessageResponse:
     return ConversationMessageResponse(
         id=message.id,
         sender=message.sender,
-        sender_name=message.sender_name,
+        sender_name=(
+            localized("مجهول الهوية", "Anonymous", language)
+            if message.is_anonymous
+            else message.sender_name
+        ),
+        is_anonymous=message.is_anonymous,
         kind=message.kind,
         content=message.content,
         created_at=message.created_at,
@@ -54,22 +62,29 @@ def serialize_message(
 
 
 def serialize_conversation(
-    conversation: Conversation, current_user_id: str
+    conversation: Conversation, current_user_id: str, language: Language
 ) -> ConversationResponse:
-    servant_name = (
-        conversation.servant.name if conversation.servant else "خادمات مدارس الأحد"
+    servant_name = localized(
+        conversation.servant.name if conversation.servant else "خادمات مدارس الأحد",
+        conversation.servant.name_en if conversation.servant else "Sunday School servants",
+        language,
     )
     last_message = conversation.messages[-1] if conversation.messages else None
     preview = ""
     if last_message:
-        prefix = "انت : " if last_message.sender_user_id == current_user_id else ""
+        prefix = (
+            localized("انت: ", "You: ", language)
+            if last_message.sender_user_id == current_user_id
+            else ""
+        )
         preview = f"{prefix}{last_message.content}"
     return ConversationResponse(
         id=conversation.id,
         servant_name=servant_name,
         preview=preview,
         messages=[
-            serialize_message(item, current_user_id) for item in conversation.messages
+            serialize_message(item, current_user_id, language)
+            for item in conversation.messages
         ],
         status=conversation.status,
         kind=conversation.kind,
@@ -251,6 +266,7 @@ async def conversation_socket(websocket: WebSocket) -> None:
 )
 def list_conversations(
     search: str | None = Query(default=None, max_length=160),
+    language: Language = Depends(get_language),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[ConversationResponse]:
@@ -271,7 +287,7 @@ def list_conversations(
             Conversation.messages.any(ConversationMessage.content.ilike(text))
         )
     conversations = db.execute(statement).unique().scalars().all()
-    return [serialize_conversation(item, user.id) for item in conversations]
+    return [serialize_conversation(item, user.id, language) for item in conversations]
 
 
 @router.get(
@@ -281,11 +297,12 @@ def list_conversations(
 )
 def get_conversation(
     conversation_id: str,
+    language: Language = Depends(get_language),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> ConversationResponse:
     return serialize_conversation(
-        accessible_conversation(db, user, conversation_id), user.id
+        accessible_conversation(db, user, conversation_id), user.id, language
     )
 
 
@@ -297,6 +314,7 @@ def get_conversation(
 )
 async def send_message(
     payload: SendMessageRequest,
+    language: Language = Depends(get_language),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> SendMessageResponse:
@@ -310,6 +328,7 @@ async def send_message(
         sender_user_id=user.id,
         sender=SenderKind.BENEFICIARY,
         sender_name=sender_name,
+        is_anonymous=payload.anonymous,
         kind=payload.kind,
         content=payload.content.strip(),
         status=MessageDeliveryStatus.SENT,
@@ -345,7 +364,7 @@ async def send_message(
 
     return SendMessageResponse(
         conversation_id=conversation.id,
-        message=serialize_message(message, user.id),
+        message=serialize_message(message, user.id, language),
     )
 
 

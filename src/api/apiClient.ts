@@ -5,6 +5,7 @@ import axios, {
 } from 'axios';
 import { API_BASE_URL } from '../config/environment';
 import type { AuthSession } from '../types/auth';
+import type { Language } from '../localization';
 
 interface AuthHandlers {
   getAccessToken: () => string | undefined;
@@ -24,6 +25,11 @@ let authHandlers: AuthHandlers = {
   onUnauthorized: () => undefined,
 };
 let refreshPromise: Promise<AuthSession> | undefined;
+let apiLanguage: Language = 'ar';
+
+export const setApiLanguage = (language: Language): void => {
+  apiLanguage = language;
+};
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -36,9 +42,10 @@ export const configureApiClient = (handlers: AuthHandlers): void => {
 };
 
 apiClient.interceptors.request.use(config => {
+  config.headers = AxiosHeaders.from(config.headers);
+  config.headers.set('Accept-Language', apiLanguage);
   const accessToken = authHandlers.getAccessToken();
   if (accessToken) {
-    config.headers = AxiosHeaders.from(config.headers);
     config.headers.set('Authorization', `Bearer ${accessToken}`);
   }
   return config;

@@ -9,13 +9,15 @@ import {
   useNotificationsQuery,
 } from '../../providers/NotificationsProvider/hooks';
 import { QueryState } from '../../components/feedback/QueryState';
+import { useLocalization } from '../../localization';
 
 export function NotificationsScreen() {
+  const { t } = useLocalization();
   const notifications = useNotificationsQuery();
   const markRead = useMarkNotificationReadMutation();
   return (
     <Screen scroll={false}>
-      <AppHeader title="الإشعارات" />
+      <AppHeader title={t('more.notifications')} />
       <QueryState
         loading={notifications.isLoading}
         error={notifications.isError}
@@ -40,7 +42,7 @@ export function NotificationsScreen() {
             color={colors.muted}
           />
           <AppText align="center" className="mt-4 text-body text-muted">
-            لا توجد إشعارات
+            {t('notifications.empty')}
           </AppText>
         </View>
       ) : null}

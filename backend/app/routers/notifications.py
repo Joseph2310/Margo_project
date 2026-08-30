@@ -5,11 +5,24 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.exceptions import AppError
+from app.localization import Language, get_language, localized
 from app.models import Notification, User
 from app.schemas import MessageResponse, NotificationResponse
 
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
+
+
+def serialize_notification(
+    notification: Notification, language: Language
+) -> NotificationResponse:
+    return NotificationResponse(
+        id=notification.id,
+        title=localized(notification.title, notification.title_en, language),
+        body=localized(notification.body, notification.body_en, language),
+        is_read=notification.is_read,
+        created_at=notification.created_at,
+    )
 
 
 @router.get(
@@ -18,14 +31,16 @@ router = APIRouter(prefix="/notifications", tags=["Notifications"])
     summary="List my notifications newest first",
 )
 def list_notifications(
-    user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    language: Language = Depends(get_language),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> list[NotificationResponse]:
     notifications = db.scalars(
         select(Notification)
         .where(Notification.user_id == user.id)
         .order_by(Notification.created_at.desc())
     ).all()
-    return [NotificationResponse.model_validate(item) for item in notifications]
+    return [serialize_notification(item, language) for item in notifications]
 
 
 @router.patch(
@@ -35,6 +50,7 @@ def list_notifications(
 )
 def mark_notification_read(
     notification_id: str,
+    language: Language = Depends(get_language),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> NotificationResponse:
@@ -48,7 +64,7 @@ def mark_notification_read(
         raise AppError(404, "notification_not_found", "The notification was not found.")
     notification.is_read = True
     db.commit()
-    return NotificationResponse.model_validate(notification)
+    return serialize_notification(notification, language)
 
 
 @router.patch(

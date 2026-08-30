@@ -14,8 +14,10 @@ import {
 } from '../../providers/ConversationsProvider/hooks';
 import { colors } from '../../theme/tokens';
 import type { RootStackParamList } from '../../types/navigation';
+import { directionStyles, useLocalization } from '../../localization';
 
 export function HouseScreen() {
+  const { isRTL, t } = useLocalization();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [search, setSearch] = useState('');
@@ -30,16 +32,19 @@ export function HouseScreen() {
       </View>
       <View className="flex-1 px-5 pt-2">
         <AppText align="center" className="mb-5 text-title font-bold">
-          البيت
+          {t('tabs.house')}
         </AppText>
-        <View className="mb-3 h-12 flex-row-reverse items-center rounded-full bg-white px-4">
+        <View
+          className={`mb-3 h-12 items-center rounded-full bg-white px-4 ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
           <Ionicons name="search-outline" size={21} color={colors.primary} />
           <TextInput
-            className="flex-1 px-3 text-right text-ink"
-            placeholder="بحث عن المحادثات"
+            className="flex-1 px-3 text-ink"
+            placeholder={t('chat.search')}
             placeholderTextColor={colors.muted}
             value={search}
             onChangeText={setSearch}
+            textAlign={isRTL ? 'right' : 'left'}
+            style={isRTL ? directionStyles.rtlText : directionStyles.ltrText}
           />
         </View>
         <QueryState
@@ -50,14 +55,14 @@ export function HouseScreen() {
         {conversations.data?.map(conversation => (
           <Pressable
             key={conversation.id}
-            className="mb-1 flex-row-reverse items-center border-b border-line/50 py-3"
+            className={`mb-1 items-center border-b border-line/50 py-3 ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}
             onPress={() =>
               navigation.navigate('Chat', { conversationId: conversation.id })
             }>
             <View className="h-12 w-12 items-center justify-center rounded-full bg-rose">
               <Ionicons name="person" size={24} color={colors.primary} />
             </View>
-            <View className="mr-3 flex-1">
+            <View className={`${isRTL ? 'mr-3' : 'ml-3'} flex-1`}>
               <AppText className="text-label font-medium">
                 {conversation.servantName}
               </AppText>
@@ -70,16 +75,16 @@ export function HouseScreen() {
               onPress={() =>
                 Alert.alert(conversation.servantName, undefined, [
                   {
-                    text: `حظر ${conversation.servantName}`,
+                    text: t('chat.block', { name: conversation.servantName }),
                     style: 'destructive',
                     onPress: () => blockConversation.mutate(conversation.id),
                   },
                   {
-                    text: 'إزالة المحادثة',
+                    text: t('chat.delete'),
                     style: 'destructive',
                     onPress: () => deleteConversation.mutate(conversation.id),
                   },
-                  { text: 'إلغاء', style: 'cancel' },
+                  { text: t('common.cancel'), style: 'cancel' },
                 ])
               }>
               <Ionicons
@@ -95,12 +100,12 @@ export function HouseScreen() {
             <AppText
               align="center"
               className="text-hero leading-[44px] text-primary">
-              إبدأ محادثتك او استفساراتك مع خادمات مدارس الاحد الان
+              {t('chat.empty')}
             </AppText>
           </View>
         ) : null}
         <Pressable
-          className="mb-5 mt-auto items-center self-start"
+          className={`mb-5 mt-auto items-center ${isRTL ? 'self-end' : 'self-start'}`}
           onPress={() =>
             navigation.navigate('Chat', { conversationId: 'all' })
           }>
@@ -112,7 +117,7 @@ export function HouseScreen() {
             />
           </View>
           <AppText align="center" className="text-small mt-1 text-primary">
-            المحادثة مع{`\n`}الجميع
+            {t('chat.everyone')}
           </AppText>
         </Pressable>
       </View>

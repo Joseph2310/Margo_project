@@ -123,6 +123,7 @@ def test_authenticated_bidirectional_realtime_chat() -> None:
                     assert event_a["data"]["message"]["isMine"] is True
                     assert event_b["data"]["message"]["isMine"] is False
                     assert event_b["data"]["message"]["senderName"] == "مجهول الهوية"
+                    assert event_b["data"]["message"]["isAnonymous"] is True
                     delivered = await receive_event(
                         socket_a, "message.status", message_id=message_a["id"]
                     )

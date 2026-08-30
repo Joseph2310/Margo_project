@@ -5,8 +5,10 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { colors } from '../../theme/tokens';
 import { useRefreshSessionMutation } from '../../providers/AuthProvider/hooks';
 import { signIn, signOut } from '../../store/authSlice';
+import { useLocalization } from '../../localization';
 
 export function SplashScreen() {
+  const { t } = useLocalization();
   const dispatch = useAppDispatch();
   const refreshToken = useAppSelector(state => state.auth.refreshToken);
   const { mutateAsync: refreshSession } = useRefreshSessionMutation();
@@ -38,7 +40,7 @@ export function SplashScreen() {
       className="flex-1 items-center justify-center"
       style={{ backgroundColor: colors.primary }}>
       <Image
-        accessibilityLabel="شعار التطبيق"
+        accessibilityLabel={t('common.appLogo')}
         source={require('../../assets/images/splash.png')}
         className="h-full w-full"
         resizeMode="cover"

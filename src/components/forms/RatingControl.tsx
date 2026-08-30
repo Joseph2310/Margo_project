@@ -1,6 +1,7 @@
 import { Pressable, View } from 'react-native';
 import { colors } from '../../theme/tokens';
 import { AppText } from '../AppText';
+import { useLocalization } from '../../localization';
 
 interface Props {
   value: number;
@@ -8,8 +9,10 @@ interface Props {
 }
 
 export function RatingControl({ value, onChange }: Props) {
+  const { isRTL, formatNumber } = useLocalization();
   return (
-    <View className="my-4 flex-row-reverse items-start justify-between px-2">
+    <View
+      className={`my-4 items-start justify-between px-2 ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
       {[1, 2, 3, 4, 5].map(rating => (
         <Pressable
           key={rating}
@@ -24,7 +27,7 @@ export function RatingControl({ value, onChange }: Props) {
             }}
           />
           <AppText align="center" className="text-small mt-1 text-primary">
-            {rating}
+            {formatNumber(rating)}
           </AppText>
         </Pressable>
       ))}

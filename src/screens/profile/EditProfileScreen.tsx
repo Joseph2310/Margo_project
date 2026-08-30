@@ -15,6 +15,7 @@ import {
 } from '../../providers/ProfileProvider/hooks';
 import { QueryState } from '../../components/feedback/QueryState';
 import { getApiErrorMessage } from '../../api/errors';
+import { useLocalization, type TranslationKey } from '../../localization';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EditProfile'>;
 type EditableKey = Exclude<
@@ -24,38 +25,43 @@ type EditableKey = Exclude<
 
 const fields: Array<{
   key: EditableKey;
-  label: string;
+  labelKey: TranslationKey;
   icon: IoniconsIconName;
   required?: boolean;
 }> = [
-  { key: 'name', label: 'الاسم', icon: 'person', required: true },
+  { key: 'name', labelKey: 'fields.name', icon: 'person', required: true },
   {
     key: 'birthDate',
-    label: 'تاريخ الميلاد',
+    labelKey: 'fields.birthDate',
     icon: 'calendar',
     required: true,
   },
-  { key: 'stage', label: 'المرحلة', icon: 'people', required: true },
-  { key: 'address', label: 'عنوان البيت', icon: 'home', required: true },
-  { key: 'phone', label: 'رقم التليفون', icon: 'call', required: true },
+  { key: 'stage', labelKey: 'fields.stage', icon: 'people', required: true },
+  { key: 'address', labelKey: 'fields.address', icon: 'home', required: true },
+  { key: 'phone', labelKey: 'fields.phone', icon: 'call', required: true },
   {
     key: 'whatsapp',
-    label: 'رقم الواتس اب',
+    labelKey: 'fields.whatsapp',
     icon: 'logo-whatsapp',
     required: true,
   },
-  { key: 'school', label: 'المدرسة', icon: 'school', required: true },
+  { key: 'school', labelKey: 'fields.school', icon: 'school', required: true },
   {
     key: 'classSaintName',
-    label: 'اسم قديس الفصل',
+    labelKey: 'fields.classSaintName',
     icon: 'person-circle',
     required: true,
   },
-  { key: 'confessionFather', label: 'اب الاعتراف ( إختياري )', icon: 'body' },
-  { key: 'email', label: 'البريد الالكتروني', icon: 'mail', required: true },
+  {
+    key: 'confessionFather',
+    labelKey: 'fields.confessionFatherOptional',
+    icon: 'body',
+  },
+  { key: 'email', labelKey: 'fields.email', icon: 'mail', required: true },
 ];
 
 export function EditProfileScreen({ navigation }: Props) {
+  const { language, t } = useLocalization();
   const profileQuery = useProfileQuery();
   const updateProfile = useUpdateProfileMutation();
   const [draft, setDraft] = useState<BeneficiaryProfile>();
@@ -63,8 +69,10 @@ export function EditProfileScreen({ navigation }: Props) {
   useEffect(() => {
     if (!profileQuery.data) return;
     setDraft(profileQuery.data);
-    setTalentsText(profileQuery.data.talents.join('، '));
-  }, [profileQuery.data]);
+    setTalentsText(
+      profileQuery.data.talents.join(language === 'ar' ? '، ' : ', '),
+    );
+  }, [language, profileQuery.data]);
   const save = async () => {
     if (!draft) return;
     try {
@@ -84,12 +92,12 @@ export function EditProfileScreen({ navigation }: Props) {
       });
       navigation.goBack();
     } catch (error) {
-      Alert.alert('تعذر حفظ البيانات', getApiErrorMessage(error));
+      Alert.alert(t('profile.saveError'), getApiErrorMessage(error, t));
     }
   };
   return (
     <Screen>
-      <AppHeader title="تعديل البيانات" />
+      <AppHeader title={t('profile.edit')} />
       <QueryState
         loading={profileQuery.isLoading}
         error={profileQuery.isError}
@@ -100,7 +108,7 @@ export function EditProfileScreen({ navigation }: Props) {
           {fields.map(field => (
             <TextField
               key={field.key}
-              label={field.label}
+              label={t(field.labelKey)}
               icon={field.icon}
               required={field.required}
               value={draft[field.key] ?? ''}
@@ -112,14 +120,14 @@ export function EditProfileScreen({ navigation }: Props) {
             />
           ))}
           <TextField
-            label="المواهب"
+            label={t('fields.talents')}
             icon="add-circle"
             value={talentsText}
             onChangeText={setTalentsText}
           />
           <PrimaryButton
             className="mt-4"
-            label="حفظ"
+            label={t('common.save')}
             loading={updateProfile.isPending}
             onPress={save}
           />

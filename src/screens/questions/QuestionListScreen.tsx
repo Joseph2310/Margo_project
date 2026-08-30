@@ -12,10 +12,12 @@ import {
 } from '../../providers/QuestionsProvider/hooks';
 import { colors } from '../../theme/tokens';
 import type { RootStackParamList } from '../../types/navigation';
+import { useLocalization } from '../../localization';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'QuestionList'>;
 
 export function QuestionListScreen({ route, navigation }: Props) {
+  const { isRTL, t } = useLocalization();
   const categories = useQuestionCategoriesQuery();
   const category = categories.data?.find(
     item => item.id === route.params.categoryId,
@@ -23,15 +25,15 @@ export function QuestionListScreen({ route, navigation }: Props) {
   const questions = useQuestionsQuery(route.params.categoryId);
   return (
     <Screen>
-      <AppHeader title="بنك الأسئلة" />
+      <AppHeader title={t('home.questionBank')} />
       <AppText className="text-label mb-4">
-        اسئلة عن {category?.title ?? ''}
+        {t('questions.aboutCategory', { category: category?.title ?? '' })}
       </AppText>
       <QueryState
         loading={questions.isLoading}
         error={questions.isError}
         empty={!questions.isLoading && !questions.data?.length}
-        emptyLabel="لا توجد أسئلة متاحة في هذا القسم"
+        emptyLabel={t('questions.emptyCategory')}
         onRetry={() => questions.refetch()}
       />
       {questions.data?.map(item => (
@@ -42,10 +44,10 @@ export function QuestionListScreen({ route, navigation }: Props) {
         />
       ))}
       <Pressable
-        className="mt-2 flex-row-reverse items-center gap-2 self-start rounded-button bg-primary p-3"
+        className={`mt-2 items-center gap-2 rounded-button bg-primary p-3 ${isRTL ? 'flex-row-reverse self-end' : 'flex-row self-start'}`}
         onPress={() => navigation.navigate('AddQuestion')}>
         <Ionicons name="add-circle-outline" size={24} color={colors.surface} />
-        <AppText className="text-white">إضافة سؤال</AppText>
+        <AppText className="text-white">{t('questions.add')}</AppText>
       </Pressable>
     </Screen>
   );

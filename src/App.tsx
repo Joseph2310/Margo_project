@@ -1,5 +1,4 @@
 import '../global.css';
-import './utils/rtl';
 import { StatusBar } from 'react-native';
 import { RootNavigator } from './navigation/RootNavigator';
 import { AppProviders } from './providers/AppProviders';

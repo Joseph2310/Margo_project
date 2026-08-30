@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.exceptions import AppError
+from app.localization import Language, get_language, localized
 from app.models import (
     KnowMeAnswer,
     KnowMeQuestion,
@@ -13,7 +14,11 @@ from app.models import (
     QuestionProposal,
     User,
 )
-from app.routers.content import get_current_know_me_question_id, serialize_know_me
+from app.routers.content import (
+    get_current_know_me_question_id,
+    serialize_category,
+    serialize_know_me,
+)
 from app.schemas import (
     KnowMeAnswerRequest,
     KnowMeQuestionResponse,
@@ -34,14 +39,16 @@ router = APIRouter(prefix="/questions", tags=["Questions"])
     summary="List active question-bank categories",
 )
 def list_categories(
-    _: User = Depends(get_current_user), db: Session = Depends(get_db)
+    language: Language = Depends(get_language),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> list[QuestionCategoryResponse]:
     categories = db.scalars(
         select(QuestionCategory)
         .where(QuestionCategory.is_active.is_(True))
         .order_by(QuestionCategory.sort_order)
     ).all()
-    return [QuestionCategoryResponse.model_validate(item) for item in categories]
+    return [serialize_category(item, language) for item in categories]
 
 
 @router.get(
@@ -51,6 +58,7 @@ def list_categories(
 )
 def list_questions(
     category_id: str = Query(alias="categoryId"),
+    language: Language = Depends(get_language),
     _: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> list[QuestionAnswerResponse]:
@@ -65,7 +73,15 @@ def list_questions(
         )
         .order_by(Question.created_at)
     ).all()
-    return [QuestionAnswerResponse.model_validate(item) for item in questions]
+    return [
+        QuestionAnswerResponse(
+            id=item.id,
+            category_id=item.category_id,
+            question=localized(item.question, item.question_en, language),
+            answer=localized(item.answer, item.answer_en, language),
+        )
+        for item in questions
+    ]
 
 
 @router.post(
@@ -95,7 +111,9 @@ def propose_question(
     summary="List recent Know Me questions and answer status",
 )
 def list_know_me_questions(
-    user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    language: Language = Depends(get_language),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> list[KnowMeQuestionResponse]:
     questions = db.scalars(
         select(KnowMeQuestion)
@@ -110,7 +128,7 @@ def list_know_me_questions(
     )
     current_question_id = get_current_know_me_question_id(db)
     return [
-        serialize_know_me(item, answered_ids, current_question_id)
+        serialize_know_me(item, answered_ids, current_question_id, language)
         for item in questions
     ]
 

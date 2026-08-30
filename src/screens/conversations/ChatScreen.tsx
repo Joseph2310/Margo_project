@@ -20,24 +20,28 @@ import { colors } from '../../theme/tokens';
 import type { ConversationMessage } from '../../types/business';
 import type { RootStackParamList } from '../../types/navigation';
 import { formatMessageTime } from '../../utils/format';
+import { useLocalization, type TranslationKey } from '../../localization';
+import type { ChatConnectionState } from '../../types/realtime';
+import type { MessageDeliveryStatus } from '../../types/business';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chat'>;
 
-const connectionLabel = {
-  connected: 'متصل الآن',
-  connecting: 'جار الاتصال…',
-  reconnecting: 'جار إعادة الاتصال…',
-  disconnected: 'غير متصل',
-  error: 'تعذر الاتصال — اضغط للمحاولة',
-} as const;
+const connectionLabel: Record<ChatConnectionState, TranslationKey> = {
+  connected: 'chat.connected',
+  connecting: 'chat.connecting',
+  reconnecting: 'chat.reconnecting',
+  disconnected: 'chat.disconnected',
+  error: 'chat.connectionError',
+};
 
-const deliveryLabel = {
-  sent: 'تم الإرسال',
-  delivered: 'تم الاستلام',
-  read: 'تمت القراءة',
-} as const;
+const deliveryLabel: Record<MessageDeliveryStatus, TranslationKey> = {
+  sent: 'chat.sent',
+  delivered: 'chat.delivered',
+  read: 'chat.read',
+};
 
 export function ChatScreen({ route }: Props) {
+  const { isRTL, language, t } = useLocalization();
   const conversationId = route.params.conversationId;
   const conversation = useConversationQuery(conversationId);
   const sendMessage = useSendMessageMutation();
@@ -76,17 +80,20 @@ export function ChatScreen({ route }: Props) {
       });
       setMessage('');
     } catch (error) {
-      Alert.alert('تعذر إرسال الرسالة', getApiErrorMessage(error));
+      Alert.alert(t('chat.sendError'), getApiErrorMessage(error, t));
     }
   };
 
   const renderMessage = ({ item }: { item: ConversationMessage }) => (
     <View className={`mb-5 ${item.isMine ? 'items-end' : 'items-start'}`}>
-      <View className="mb-1 flex-row-reverse items-center gap-2">
+      <View
+        className={`mb-1 items-center gap-2 ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
         <View className="h-8 w-8 items-center justify-center rounded-full bg-rose">
           <Ionicons name="person" size={16} color={colors.primary} />
         </View>
-        <AppText className="text-caption">{item.senderName}</AppText>
+        <AppText className="text-caption">
+          {item.isAnonymous ? t('chat.anonymous') : item.senderName}
+        </AppText>
       </View>
       <View
         className={`max-w-[78%] rounded-xl px-4 py-3 ${
@@ -95,12 +102,13 @@ export function ChatScreen({ route }: Props) {
         <AppText className={item.isMine ? 'text-white' : 'text-ink'}>
           {item.content}
         </AppText>
-        <View className="mt-1 flex-row-reverse items-center gap-1">
+        <View
+          className={`mt-1 items-center gap-1 ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
           <AppText
             className={`text-[10px] ${
               item.isMine ? 'text-white/75' : 'text-muted'
             }`}>
-            {formatMessageTime(item.createdAt)}
+            {formatMessageTime(item.createdAt, language)}
           </AppText>
           {item.isMine ? (
             <>
@@ -110,7 +118,7 @@ export function ChatScreen({ route }: Props) {
                 color={item.status === 'read' ? '#D9F8FF' : '#FFFFFF'}
               />
               <AppText className="text-[10px] text-white/75">
-                {deliveryLabel[item.status]}
+                {t(deliveryLabel[item.status])}
               </AppText>
             </>
           ) : null}
@@ -126,11 +134,11 @@ export function ChatScreen({ route }: Props) {
       </View>
       <View className="flex-1">
         <View className="px-5">
-          <AppHeader title="البيت" />
+          <AppHeader title={t('tabs.house')} />
           <Pressable
             disabled={connectionState === 'connected'}
             onPress={reconnect}
-            className="mb-2 flex-row-reverse items-center justify-center gap-1">
+            className={`mb-2 items-center justify-center gap-1 ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}>
             <View
               className={`h-2 w-2 rounded-full ${
                 connectionState === 'connected'
@@ -139,7 +147,7 @@ export function ChatScreen({ route }: Props) {
               }`}
             />
             <AppText className="text-caption text-muted">
-              {connectionLabel[connectionState]}
+              {t(connectionLabel[connectionState])}
             </AppText>
           </Pressable>
         </View>
@@ -166,7 +174,7 @@ export function ChatScreen({ route }: Props) {
                   <AppText
                     align="center"
                     className="text-hero leading-[44px] text-primary">
-                    إبدأ محادثتك او استفساراتك مع خادمات مدارس الاحد الان
+                    {t('chat.empty')}
                   </AppText>
                 </View>
               }

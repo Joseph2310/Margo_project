@@ -1,29 +1,27 @@
 import type { ComponentProps } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 import { colors } from '../theme/tokens';
+import { directionStyles, useLocalization } from '../localization';
 
 type Props = ComponentProps<typeof Text> & {
   align?: 'right' | 'center' | 'left';
 };
 
-export function AppText({ style, align = 'right', ...props }: Props) {
+export function AppText({ style, align, ...props }: Props) {
+  const { isRTL } = useLocalization();
   return (
     <Text
       {...props}
       allowFontScaling
       style={[
-        styles.rtl,
         {
           color: colors.ink,
           fontFamily: undefined,
-          textAlign: align,
+          textAlign: align ?? (isRTL ? 'right' : 'left'),
         },
+        isRTL ? directionStyles.rtlText : directionStyles.ltrText,
         style,
       ]}
     />
   );
 }
-
-const styles = StyleSheet.create({
-  rtl: { writingDirection: 'rtl' },
-});

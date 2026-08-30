@@ -160,11 +160,15 @@ class Event(TimestampMixin, Base):
 
     id: Mapped[str] = mapped_column(String(80), primary_key=True)
     name: Mapped[str] = mapped_column(String(240))
+    name_en: Mapped[str | None] = mapped_column(String(240), nullable=True)
     starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     ends_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     date_label: Mapped[str] = mapped_column(String(160))
+    date_label_en: Mapped[str | None] = mapped_column(String(160), nullable=True)
     time_label: Mapped[str] = mapped_column(String(160))
+    time_label_en: Mapped[str | None] = mapped_column(String(160), nullable=True)
     location: Mapped[str] = mapped_column(String(500))
+    location_en: Mapped[str | None] = mapped_column(String(500), nullable=True)
     icon: Mapped[str] = mapped_column(String(80))
     is_published: Mapped[bool] = mapped_column(Boolean, default=True)
 
@@ -175,9 +179,13 @@ class DailyReading(TimestampMixin, Base):
     id: Mapped[str] = mapped_column(String(80), primary_key=True)
     reading_date: Mapped[date] = mapped_column(Date, unique=True, index=True)
     date_label: Mapped[str] = mapped_column(String(160))
+    date_label_en: Mapped[str | None] = mapped_column(String(160), nullable=True)
     reference: Mapped[str] = mapped_column(String(160))
+    reference_en: Mapped[str | None] = mapped_column(String(160), nullable=True)
     title: Mapped[str] = mapped_column(String(160))
+    title_en: Mapped[str | None] = mapped_column(String(160), nullable=True)
     content: Mapped[str | None] = mapped_column(Text, nullable=True)
+    content_en: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_published: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
@@ -186,8 +194,10 @@ class SpiritualActivity(TimestampMixin, Base):
 
     id: Mapped[str] = mapped_column(String(80), primary_key=True)
     title: Mapped[str] = mapped_column(String(240))
+    title_en: Mapped[str | None] = mapped_column(String(240), nullable=True)
     points: Mapped[int | None] = mapped_column(Integer, nullable=True)
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    description_en: Mapped[str | None] = mapped_column(Text, nullable=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
@@ -241,9 +251,13 @@ class ReflectionLesson(TimestampMixin, Base):
 
     id: Mapped[str] = mapped_column(String(80), primary_key=True)
     date_label: Mapped[str] = mapped_column(String(200))
+    date_label_en: Mapped[str | None] = mapped_column(String(200), nullable=True)
     title: Mapped[str] = mapped_column(String(240))
+    title_en: Mapped[str | None] = mapped_column(String(240), nullable=True)
     points: Mapped[list[str]] = mapped_column(JSON, default=list)
+    points_en: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
     exercise: Mapped[str] = mapped_column(Text)
+    exercise_en: Mapped[str | None] = mapped_column(Text, nullable=True)
     exercise_points: Mapped[int | None] = mapped_column(Integer, nullable=True)
     published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     is_published: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -273,6 +287,7 @@ class QuestionCategory(TimestampMixin, Base):
 
     id: Mapped[str] = mapped_column(String(80), primary_key=True)
     title: Mapped[str] = mapped_column(String(160))
+    title_en: Mapped[str | None] = mapped_column(String(160), nullable=True)
     icon: Mapped[str] = mapped_column(String(80))
     color: Mapped[str] = mapped_column(String(40))
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
@@ -287,7 +302,9 @@ class Question(TimestampMixin, Base):
         ForeignKey("question_categories.id"), index=True
     )
     question: Mapped[str] = mapped_column(Text)
+    question_en: Mapped[str | None] = mapped_column(Text, nullable=True)
     answer: Mapped[str] = mapped_column(Text)
+    answer_en: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_published: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
@@ -313,6 +330,7 @@ class KnowMeQuestion(TimestampMixin, Base):
 
     id: Mapped[str] = mapped_column(String(80), primary_key=True)
     label: Mapped[str] = mapped_column(String(300))
+    label_en: Mapped[str | None] = mapped_column(String(300), nullable=True)
     asked_at: Mapped[date] = mapped_column(Date, index=True)
     points: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -343,6 +361,7 @@ class Servant(TimestampMixin, Base):
 
     id: Mapped[str] = mapped_column(String(80), primary_key=True)
     name: Mapped[str] = mapped_column(String(160))
+    name_en: Mapped[str | None] = mapped_column(String(160), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
@@ -388,6 +407,7 @@ class ConversationMessage(Base):
         Enum(SenderKind, native_enum=False, length=24)
     )
     sender_name: Mapped[str] = mapped_column(String(160))
+    is_anonymous: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     kind: Mapped[MessageKind] = mapped_column(
         Enum(MessageKind, native_enum=False, length=24)
     )
@@ -435,7 +455,9 @@ class Notification(Base):
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
     title: Mapped[str] = mapped_column(String(240))
+    title_en: Mapped[str | None] = mapped_column(String(240), nullable=True)
     body: Mapped[str] = mapped_column(Text)
+    body_en: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_read: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, nullable=False

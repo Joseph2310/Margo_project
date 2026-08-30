@@ -9,24 +9,27 @@ import { PasswordRules } from '../../components/forms/PasswordRules';
 import { TextField } from '../../components/forms/TextField';
 import type { RootStackParamList } from '../../types/navigation';
 import {
-  resetPasswordSchema,
+  createResetPasswordSchema,
   type ResetPasswordForm,
 } from '../../utils/validation';
 import { useResetPasswordMutation } from '../../providers/AuthProvider/hooks';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { getApiErrorMessage } from '../../api/errors';
+import { useLocalization } from '../../localization';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ResetPassword'>;
 
 export function ResetPasswordScreen({ navigation, route }: Props) {
+  const { t } = useLocalization();
   const resetPassword = useResetPasswordMutation();
   const [serverError, setServerError] = useState<string>();
+  const schema = useMemo(() => createResetPasswordSchema(t), [t]);
   const {
     control,
     handleSubmit,
     formState: { errors },
   } = useForm<ResetPasswordForm>({
-    resolver: zodResolver(resetPasswordSchema),
+    resolver: zodResolver(schema),
     defaultValues: { password: '', confirmPassword: '' },
   });
   const password = useWatch({ control, name: 'password' }) ?? '';
@@ -40,21 +43,21 @@ export function ResetPasswordScreen({ navigation, route }: Props) {
       });
       navigation.replace('Login');
     } catch (error) {
-      setServerError(getApiErrorMessage(error));
+      setServerError(getApiErrorMessage(error, t));
     }
   });
   return (
     <Screen scroll={false}>
       <AppHeader title="" />
       <AppText align="center" className="mb-16 mt-6 text-title font-bold">
-        تسجيل كلمة مرور جديدة
+        {t('auth.newPasswordTitle')}
       </AppText>
       <Controller
         control={control}
         name="password"
         render={({ field }) => (
           <TextField
-            label="كلمة المرور"
+            label={t('fields.password')}
             icon="lock-closed"
             secureTextEntry
             value={field.value}
@@ -69,7 +72,7 @@ export function ResetPasswordScreen({ navigation, route }: Props) {
         name="confirmPassword"
         render={({ field }) => (
           <TextField
-            label="تأكيد كلمة المرور"
+            label={t('fields.confirmPassword')}
             icon="lock-closed"
             secureTextEntry
             value={field.value}
@@ -85,7 +88,7 @@ export function ResetPasswordScreen({ navigation, route }: Props) {
       ) : null}
       <PrimaryButton
         className="mt-10"
-        label="متابعة"
+        label={t('common.continue')}
         loading={resetPassword.isPending}
         onPress={submit}
       />

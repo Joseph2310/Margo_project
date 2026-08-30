@@ -6,20 +6,22 @@ import { PrimaryButton } from '../../components/PrimaryButton';
 import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/forms/TextField';
 import type { RootStackParamList } from '../../types/navigation';
-import { emailSchema } from '../../utils/validation';
+import { createEmailSchema } from '../../utils/validation';
 import { useForgotPasswordMutation } from '../../providers/AuthProvider/hooks';
 import { getApiErrorMessage } from '../../api/errors';
+import { useLocalization } from '../../localization';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ForgotPassword'>;
 
 export function ForgotPasswordScreen({ navigation }: Props) {
+  const { t } = useLocalization();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string>();
   const forgotPassword = useForgotPasswordMutation();
   const send = async () => {
-    const result = emailSchema.safeParse(email);
+    const result = createEmailSchema(t).safeParse(email);
     if (!result.success) {
-      setError(result.error.issues[0]?.message ?? 'البريد الالكتروني غير صحيح');
+      setError(result.error.issues[0]?.message ?? t('validation.emailInvalid'));
       return;
     }
     try {
@@ -30,21 +32,20 @@ export function ForgotPasswordScreen({ navigation }: Props) {
         debugCode: challenge.verificationCode,
       });
     } catch (requestError) {
-      setError(getApiErrorMessage(requestError));
+      setError(getApiErrorMessage(requestError, t));
     }
   };
   return (
     <Screen scroll={false}>
       <AppHeader title="" />
       <AppText align="center" className="mt-6 text-title font-bold">
-        نسيت كلمة السر ؟
+        {t('auth.forgotTitle')}
       </AppText>
       <AppText align="center" className="mb-12 mt-2 px-4 text-body">
-        اذا كنت نسيت كلمة المرور الخاصة بك أدخل بريدك الالكتروني ليصلك كود
-        التسجيل
+        {t('auth.forgotDescription')}
       </AppText>
       <TextField
-        label="البريد الالكتروني"
+        label={t('fields.email')}
         icon="mail"
         autoCapitalize="none"
         keyboardType="email-address"
@@ -57,7 +58,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
       />
       <PrimaryButton
         className="mb-8 mt-auto"
-        label="إرسال"
+        label={t('common.send')}
         loading={forgotPassword.isPending}
         onPress={send}
       />

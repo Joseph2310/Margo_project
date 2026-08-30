@@ -278,6 +278,7 @@ class ConversationMessageResponse(ApiModel):
     id: str
     sender: SenderKind
     sender_name: str
+    is_anonymous: bool
     kind: MessageKind
     content: str
     created_at: datetime
